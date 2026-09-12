@@ -1,7 +1,16 @@
 // 管理后台通用脚本
+function getSafeRedirectPath(value) {
+  if (typeof value !== 'string') return '/admin/';
+  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return '/admin/';
+  }
+  return value;
+}
+
 function checkAdminAuth() {
   if (!api.isLoggedIn()) {
-    window.location.href = '/admin/login.html';
+    const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/admin/login.html?redirect=${returnUrl}`;
     return false;
   }
   return true;
@@ -46,3 +55,4 @@ async function handleLogout() {
 window.checkAdminAuth = checkAdminAuth;
 window.renderAdminSidebar = renderAdminSidebar;
 window.handleLogout = handleLogout;
+window.getSafeRedirectPath = getSafeRedirectPath;
