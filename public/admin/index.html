@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仪表盘 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      renderPage();
+    }
+
+    async function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar('dashboard')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>📊 仪表盘</h1>
+              <div>
+                <a href="/admin/post-edit.html" class="btn btn-primary">✏️ 写新文章</a>
+              </div>
+            </div>
+            <div id="stats-container">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+            <div class="admin-card">
+              <h3 style="margin-bottom:16px;">📋 最新文章</h3>
+              <div id="recent-posts">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+            </div>
+            <div class="admin-card">
+              <h3 style="margin-bottom:16px;">💬 最新评论</h3>
+              <div id="recent-comments">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      `;
+
+      loadStats();
+      loadRecentPosts();
+    }
+
+    async function loadStats() {
+      try {
+        // 获取文章统计
+        const postsData = await api.posts.list(1, 1, 'all');
+        const publishedData = await api.posts.list(1, 1, 'published');
+        
+        // 计算总阅读量（取前100篇估算）
+        const allPosts = await api.posts.list(1, 100, 'all');
+        const totalViews = allPosts.posts.reduce((sum, p) => sum + (p.views || 0), 0);
+
+        // 评论数量需要另一个接口，这里先显示0，后面优化
+        const container = document.getElementById('stats-container');
+        container.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon blue">📝</div>
+              <div class="stat-value">${postsData.total}</div>
+              <div class="stat-label">文章总数</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">✅</div>
+              <div class="stat-value">${publishedData.total}</div>
+              <div class="stat-label">已发布</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon purple">👁️</div>
+              <div class="stat-value">${totalViews}</div>
+              <div class="stat-label">总阅读量</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">💬</div>
+              <div class="stat-value" id="comment-count">--</div>
+              <div class="stat-label">评论数</div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('stats-container').innerHTML = `<div class="alert alert-error">加载统计失败: ${e.message}</div>`;
+      }
+    }
+
+    async function loadRecentPosts() {
+      try {
+        const data = await api.posts.list(1, 5, 'all');
+        const container = document.getElementById('recent-posts');
+        
+        if (data.posts.length === 0) {
+          utils.showEmpty(container, '还没有文章', '✍️');
+          return;
+        }
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>状态</th>
+                <th>阅读量</th>
+                <th>发布时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.posts.map(post => `
+                <tr>
+                  <td><a href="/post.html?slug=${post.slug}" target="_blank">${utils.escapeHtml(post.title)}</a></td>
+                  <td>
+                    <span class="tag" style="background:${post.status === 'published' ? '#dcfce7;color:#166534' : '#fef3c7;color:#92400e'};">
+                      ${post.status === 'published' ? '已发布' : '草稿'}
+                    </span>
+                  </td>
+                  <td>${post.views}</td>
+                  <td>${utils.formatDate(post.created_at)}</td>
+                  <td>
+                    <a href="/admin/post-edit.html?slug=${post.slug}" class="btn btn-sm btn-secondary">编辑</a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (e) {
+        document.getElementById('recent-posts').innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网站设置 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      renderPage();
+    }
+
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar('settings')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>⚙️ 网站设置</h1>
+              <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+            </div>
+            
+            <div id="message"></div>
+
+            <div class="admin-card">
+              <h3 style="margin-bottom:20px;">📌 基本设置</h3>
+              <div class="form-group">
+                <label>网站标题</label>
+                <input type="text" id="setting-title" placeholder="我的博客">
+              </div>
+              <div class="form-group">
+                <label>网站描述</label>
+                <textarea id="setting-desc" rows="3" placeholder="一句话描述你的博客"></textarea>
+              </div>
+              <div class="form-group">
+                <label>SEO关键词</label>
+                <input type="text" id="setting-keywords" placeholder="用逗号分隔，如：博客,技术,生活">
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <h3 style="margin-bottom:20px;">📬 联系方式</h3>
+              <div class="form-group">
+                <label>联系信息（支持换行和链接）</label>
+                <textarea id="setting-contact" rows="5" placeholder="邮箱: your@email.com&#10;微信: your_wechat&#10;GitHub: https://github.com/yourname"></textarea>
+                <div class="form-help">这些信息会显示在"联系我"页面和页脚</div>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <h3 style="margin-bottom:20px;">💰 广告/推广代码</h3>
+              <div class="form-group">
+                <label>侧边栏广告代码（HTML）</label>
+                <textarea id="setting-ad" rows="8" placeholder="粘贴广告联盟的HTML代码" style="font-family:Consolas,monospace;font-size:13px;"></textarea>
+                <div class="form-help">支持任意HTML代码，可以是广告、推广链接或其他内容。留空则显示默认占位符。</div>
+              </div>
+              <div class="form-group">
+                <label>自定义推广页面内容（HTML）</label>
+                <textarea id="setting-promo" rows="8" placeholder="自定义推广页面的HTML内容" style="font-family:Consolas,monospace;font-size:13px;"></textarea>
+                <div class="form-help">访问 /promo.html 即可查看此页面，用于放置推广内容或合作页面。</div>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <h3 style="margin-bottom:20px;">💬 评论设置</h3>
+              <div class="form-group">
+                <label>
+                  <label class="switch">
+                    <input type="checkbox" id="setting-moderation">
+                    <span class="slider"></span>
+                  </label>
+                  评论需要审核后显示
+                </label>
+                <div class="form-help">开启后，用户发表的评论需要管理员审核通过才会显示</div>
+              </div>
+            </div>
+
+            <div style="margin-top:24px;text-align:right;">
+              <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+            </div>
+          </main>
+        </div>
+      `;
+
+      loadSettings();
+    }
+
+    async function loadSettings() {
+      try {
+        const { settings } = await api.settings.get();
+        document.getElementById('setting-title').value = settings.site_title || '';
+        document.getElementById('setting-desc').value = settings.site_description || '';
+        document.getElementById('setting-keywords').value = settings.seo_keywords || '';
+        document.getElementById('setting-contact').value = settings.contact_info || '';
+        document.getElementById('setting-ad').value = settings.ad_code || '';
+        document.getElementById('setting-promo').value = settings.promo_content || '';
+        document.getElementById('setting-moderation').checked = settings.comments_moderation === '1';
+      } catch (e) {
+        document.getElementById('message').innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    async function saveSettings() {
+      const data = {
+        site_title: document.getElementById('setting-title').value.trim(),
+        site_description: document.getElementById('setting-desc').value.trim(),
+        seo_keywords: document.getElementById('setting-keywords').value.trim(),
+        contact_info: document.getElementById('setting-contact').value,
+        ad_code: document.getElementById('setting-ad').value,
+        promo_content: document.getElementById('setting-promo').value,
+        comments_moderation: document.getElementById('setting-moderation').checked ? '1' : '0'
+      };
+
+      try {
+        await api.settings.update(data);
+        utils.showMessage('设置保存成功', 'success');
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

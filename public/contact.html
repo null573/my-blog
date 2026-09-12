@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>联系我 - 我的博客</title>
+  <meta name="description" content="联系方式">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <div class="logo-icon">B</div>
+        <span id="site-title">我的博客</span>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/">首页</a></li>
+          <li><a href="/search.html">搜索</a></li>
+          <li><a href="/contact.html" class="active">联系我</a></li>
+          <li id="admin-link" style="display:none;"><a href="/admin/">管理</a></li>
+        </ul>
+      </nav>
+      <div class="nav-right">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="搜索文章..." onkeypress="if(event.key==='Enter')doSearch()">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="main-layout">
+      <main>
+        <div class="card" style="padding:40px;">
+          <h1 style="margin-bottom:24px;">📬 联系我</h1>
+          <div id="contact-content" style="line-height:2;font-size:16px;">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="sidebar">
+        <div class="widget" id="ad-widget">
+          <div class="ad-space">
+            <div class="ad-space-title">广告位</div>
+            <p style="font-size:13px;color:var(--text-light);">您的广告可以在这里展示</p>
+          </div>
+        </div>
+
+        <div class="widget">
+          <h3 class="widget-title">友情链接</h3>
+          <ul class="links-list" id="links-list">
+            <li style="color:var(--text-light);font-size:14px;">加载中...</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>关于博客</h4>
+        <p id="footer-desc">这是一个分享技术与生活的个人博客，记录成长的点滴。</p>
+      </div>
+      <div class="footer-section">
+        <h4>快速链接</h4>
+        <ul>
+          <li><a href="/">首页</a></li>
+          <li><a href="/search.html">搜索</a></li>
+          <li><a href="/contact.html">联系我</a></li>
+          <li><a href="/admin/login.html">管理员登录</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>联系方式</h4>
+        <p id="footer-contact">邮箱: admin@example.com</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; <span id="current-year"></span> 我的博客. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+      
+      // 加载设置
+      try {
+        const { settings } = await api.settings.get();
+        if (settings.site_title) {
+          document.getElementById('site-title').textContent = settings.site_title;
+          document.title = '联系我 - ' + settings.site_title;
+        }
+        if (settings.site_description) {
+          document.getElementById('footer-desc').textContent = settings.site_description;
+        }
+        if (settings.contact_info) {
+          const contactHtml = settings.contact_info
+            .replace(/\n/g, '<br>')
+            .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+          document.getElementById('contact-content').innerHTML = contactHtml;
+          document.getElementById('footer-contact').innerHTML = contactHtml;
+        } else {
+          document.getElementById('contact-content').innerHTML = '暂未设置联系方式';
+        }
+        if (settings.ad_code) {
+          document.getElementById('ad-widget').innerHTML = settings.ad_code;
+        }
+      } catch (e) {
+        document.getElementById('contact-content').innerHTML = '<div class="alert alert-error">加载失败</div>';
+      }
+
+      if (api.isLoggedIn()) {
+        document.getElementById('admin-link').style.display = 'block';
+      }
+
+      loadLinks();
+    });
+
+    function doSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      if (query) {
+        window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
+      }
+    }
+
+    async function loadLinks() {
+      try {
+        const { links } = await api.links.list();
+        const list = document.getElementById('links-list');
+        
+        if (links.length === 0) {
+          list.innerHTML = '<li style="color:var(--text-light);font-size:14px;">暂无链接</li>';
+          return;
+        }
+
+        list.innerHTML = links.map(link => `
+          <li>
+            <a href="${utils.escapeHtml(link.url)}" target="_blank" rel="noopener">
+              <span class="link-icon">${link.name.charAt(0).toUpperCase()}</span>
+              <span>${utils.escapeHtml(link.name)}</span>
+            </a>
+          </li>
+        `).join('');
+      } catch (e) {
+        document.getElementById('links-list').innerHTML = '<li style="color:var(--danger);font-size:14px;">加载失败</li>';
+      }
+    }
+  </script>
+</body>
+</html>

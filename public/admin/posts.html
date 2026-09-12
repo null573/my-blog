@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章管理 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    let currentPage = 1;
+    let currentStatus = 'all';
+
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      renderPage();
+    }
+
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar('posts')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>📝 文章管理</h1>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <select id="status-filter" onchange="filterPosts()" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);">
+                  <option value="all">全部文章</option>
+                  <option value="published">已发布</option>
+                  <option value="draft">草稿</option>
+                </select>
+                <button class="btn btn-primary" onclick="window.location.href='/admin/post-edit.html'">+ 写新文章</button>
+                <button class="btn btn-secondary" onclick="exportBlogs()">📥 导出全部</button>
+              </div>
+            </div>
+            <div class="admin-card">
+              <div id="posts-table">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+              <div id="pagination" style="margin-top:20px;"></div>
+            </div>
+          </main>
+        </div>
+      `;
+
+      loadPosts();
+    }
+
+    async function loadPosts() {
+      const container = document.getElementById('posts-table');
+      utils.showLoading(container);
+
+      try {
+        const data = await api.posts.list(currentPage, 20, currentStatus);
+        
+        if (data.posts.length === 0) {
+          utils.showEmpty(container, '还没有文章', '✍️');
+          document.getElementById('pagination').innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>状态</th>
+                <th>阅读量</th>
+                <th>评论</th>
+                <th>创建时间</th>
+                <th>更新时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.posts.map(post => `
+                <tr>
+                  <td>${post.id}</td>
+                  <td>
+                    <a href="/post.html?slug=${post.slug}" target="_blank" style="font-weight:500;">
+                      ${utils.escapeHtml(post.title)}
+                    </a>
+                    <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${post.slug}</div>
+                  </td>
+                  <td>
+                    <span class="tag" style="background:${post.status === 'published' ? '#dcfce7;color:#166534' : '#fef3c7;color:#92400e'};">
+                      ${post.status === 'published' ? '已发布' : '草稿'}
+                    </span>
+                  </td>
+                  <td>${post.views}</td>
+                  <td>-</td>
+                  <td>${utils.formatDateTime(post.created_at)}</td>
+                  <td>${utils.formatDateTime(post.updated_at)}</td>
+                  <td>
+                    <div class="table-actions">
+                      <a href="/post.html?slug=${post.slug}" target="_blank" class="btn btn-sm btn-secondary">查看</a>
+                      <a href="/admin/post-edit.html?slug=${post.slug}" class="btn btn-sm btn-primary">编辑</a>
+                      <button class="btn btn-sm btn-danger" onclick="deletePost('${post.slug}')">删除</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        renderPagination(data.totalPages);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    function renderPagination(totalPages) {
+      const pagination = document.getElementById('pagination');
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      let html = '<div class="pagination">';
+      
+      if (currentPage > 1) {
+        html += `<a href="#" onclick="goToPage(${currentPage - 1});return false;">← 上一页</a>`;
+      } else {
+        html += `<span class="disabled">← 上一页</span>`;
+      }
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          html += i === currentPage 
+            ? `<span class="current">${i}</span>`
+            : `<a href="#" onclick="goToPage(${i});return false;">${i}</a>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          html += `<span>...</span>`;
+        }
+      }
+
+      if (currentPage < totalPages) {
+        html += `<a href="#" onclick="goToPage(${currentPage + 1});return false;">下一页 →</a>`;
+      } else {
+        html += `<span class="disabled">下一页 →</span>`;
+      }
+
+      html += '</div>';
+      pagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      loadPosts();
+    }
+
+    function filterPosts() {
+      currentStatus = document.getElementById('status-filter').value;
+      currentPage = 1;
+      loadPosts();
+    }
+
+    async function deletePost(slug) {
+      if (!await utils.confirm('确定要删除这篇文章吗？此操作不可恢复！')) return;
+      
+      try {
+        await api.posts.delete(slug);
+        utils.showMessage('删除成功', 'success');
+        loadPosts();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    function exportBlogs() {
+      api.admin.exportBlogs();
+    }
+  </script>
+</body>
+</html>

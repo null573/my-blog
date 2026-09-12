@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>修改密码 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      renderPage();
+    }
+
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar('profile')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>👤 修改密码</h1>
+            </div>
+
+            <div class="admin-card" style="max-width:500px;">
+              <div id="message"></div>
+              
+              <div class="form-group">
+                <label>当前密码</label>
+                <input type="password" id="old-password" placeholder="请输入当前密码">
+              </div>
+              <div class="form-group">
+                <label>新密码</label>
+                <input type="password" id="new-password" placeholder="请输入新密码（至少6位）">
+              </div>
+              <div class="form-group">
+                <label>确认新密码</label>
+                <input type="password" id="confirm-password" placeholder="再次输入新密码">
+              </div>
+
+              <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">🔐 修改密码</button>
+            </div>
+
+            <div class="admin-card" style="max-width:500px;margin-top:20px;">
+              <h3 style="margin-bottom:16px;">💡 安全提示</h3>
+              <ul style="color:var(--text-light);line-height:2;padding-left:20px;">
+                <li>密码长度至少6位</li>
+                <li>建议使用字母、数字和符号的组合</li>
+                <li>定期更换密码提高安全性</li>
+                <li>不要在多个网站使用相同密码</li>
+              </ul>
+            </div>
+          </main>
+        </div>
+      `;
+    }
+
+    async function changePassword() {
+      const oldPassword = document.getElementById('old-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const messageDiv = document.getElementById('message');
+
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        messageDiv.innerHTML = '<div class="alert alert-error">请填写所有密码字段</div>';
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        messageDiv.innerHTML = '<div class="alert alert-error">新密码至少6位</div>';
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        messageDiv.innerHTML = '<div class="alert alert-error">两次输入的新密码不一致</div>';
+        return;
+      }
+
+      try {
+        await api.admin.changePassword(oldPassword, newPassword);
+        messageDiv.innerHTML = '<div class="alert alert-success">密码修改成功！</div>';
+        document.getElementById('old-password').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+      } catch (e) {
+        messageDiv.innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

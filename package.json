@@ -1,0 +1,16 @@
+{
+  "name": "my-blog",
+  "version": "1.0.0",
+  "description": "A personal blog built with Cloudflare Pages + D1",
+  "main": "functions/index.js",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1 DB --kv BLOG_KV",
+    "deploy": "wrangler pages deploy public"
+  },
+  "keywords": ["blog", "cloudflare", "pages", "d1"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

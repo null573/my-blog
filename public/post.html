@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章详情 - 我的博客</title>
+  <meta name="description" content="博客文章详情">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <div class="logo-icon">B</div>
+        <span id="site-title">我的博客</span>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/">首页</a></li>
+          <li><a href="/search.html">搜索</a></li>
+          <li><a href="/contact.html">联系我</a></li>
+          <li id="admin-link" style="display:none;"><a href="/admin/">管理</a></li>
+        </ul>
+      </nav>
+      <div class="nav-right">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="搜索文章..." onkeypress="if(event.key==='Enter')doSearch()">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="main-layout">
+      <main>
+        <div id="post-container">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <!-- 评论区 -->
+        <div class="card" style="margin-top:20px;padding:30px;">
+          <div class="comments-section" id="comments-section">
+            <h3 class="comments-title">💬 评论</h3>
+            <div id="comments-content">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="sidebar">
+        <!-- 广告位 -->
+        <div class="widget" id="ad-widget">
+          <div class="ad-space">
+            <div class="ad-space-title">广告位</div>
+            <p style="font-size:13px;color:var(--text-light);">您的广告可以在这里展示</p>
+          </div>
+        </div>
+
+        <!-- 友情链接 -->
+        <div class="widget">
+          <h3 class="widget-title">友情链接</h3>
+          <ul class="links-list" id="links-list">
+            <li style="color:var(--text-light);font-size:14px;">加载中...</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>关于博客</h4>
+        <p id="footer-desc">这是一个分享技术与生活的个人博客，记录成长的点滴。</p>
+      </div>
+      <div class="footer-section">
+        <h4>快速链接</h4>
+        <ul>
+          <li><a href="/">首页</a></li>
+          <li><a href="/search.html">搜索</a></li>
+          <li><a href="/contact.html">联系我</a></li>
+          <li><a href="/admin/login.html">管理员登录</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>联系方式</h4>
+        <p id="footer-contact">邮箱: admin@example.com</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; <span id="current-year"></span> 我的博客. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let currentSlug = '';
+    let isAdmin = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+      
+      currentSlug = utils.getQueryParam('slug');
+      if (!currentSlug) {
+        window.location.href = '/';
+        return;
+      }
+
+      // 加载设置
+      try {
+        const { settings } = await api.settings.get();
+        if (settings.site_title) {
+          document.getElementById('site-title').textContent = settings.site_title;
+        }
+        if (settings.site_description) {
+          document.getElementById('footer-desc').textContent = settings.site_description;
+        }
+        if (settings.contact_info) {
+          document.getElementById('footer-contact').innerHTML = settings.contact_info.replace(/\n/g, '<br>');
+        }
+        if (settings.ad_code) {
+          document.getElementById('ad-widget').innerHTML = settings.ad_code;
+        }
+      } catch (e) {
+        console.error('加载设置失败', e);
+      }
+
+      // 检查登录状态
+      isAdmin = api.isLoggedIn();
+      if (isAdmin) {
+        document.getElementById('admin-link').style.display = 'block';
+      }
+
+      // 加载文章
+      loadPost();
+      
+      // 加载友情链接
+      loadLinks();
+    });
+
+    // 加载文章
+    async function loadPost() {
+      const container = document.getElementById('post-container');
+      utils.showLoading(container);
+
+      try {
+        const { post } = await api.posts.get(currentSlug);
+        
+        // 更新页面标题
+        document.title = post.title + ' - 我的博客';
+        
+        // 更新meta描述
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+          metaDesc = document.createElement('meta');
+          metaDesc.name = 'description';
+          document.head.appendChild(metaDesc);
+        }
+        metaDesc.content = post.summary || post.title;
+
+        const contentHtml = utils.parseMarkdown(post.content);
+
+        container.innerHTML = `
+          <article class="card post-detail">
+            <h1>${utils.escapeHtml(post.title)}</h1>
+            <div class="post-meta">
+              <span>📅 ${utils.formatDate(post.created_at)}</span>
+              <span>👁️ ${post.views} 阅读</span>
+              <span>💬 <span id="comment-count">0</span> 评论</span>
+              ${post.status === 'draft' ? '<span style="color:var(--warning);">📝 草稿</span>' : ''}
+              ${isAdmin ? `<a href="/admin/post-edit.html?slug=${post.slug}" class="btn btn-sm btn-outline">✏️ 编辑</a>` : ''}
+            </div>
+            <div class="post-content">
+              ${contentHtml}
+            </div>
+          </article>
+        `;
+
+        // 加载评论
+        loadComments();
+      } catch (e) {
+        if (e.message === '文章不存在') {
+          container.innerHTML = `
+            <div class="card post-detail">
+              <div class="empty-state">
+                <div class="empty-state-icon">😕</div>
+                <h3>文章不存在</h3>
+                <p>您访问的文章可能已被删除或不存在</p>
+                <br>
+                <a href="/" class="btn btn-primary">返回首页</a>
+              </div>
+            </div>
+          `;
+          document.getElementById('comments-section').style.display = 'none';
+        } else {
+          container.innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+        }
+      }
+    }
+
+    // 加载评论
+    async function loadComments() {
+      const container = document.getElementById('comments-content');
+      
+      try {
+        const data = await api.comments.list(currentSlug);
+        
+        document.getElementById('comment-count').textContent = data.total;
+
+        if (!data.allow_comments) {
+          container.innerHTML = `
+            <div class="comments-disabled">
+              🔒 该文章已关闭评论
+            </div>
+          `;
+          return;
+        }
+
+        let html = `
+          <div class="comment-form">
+            <div class="comment-form-row">
+              <input type="text" id="comment-name" placeholder="昵称（选填）" maxlength="50">
+              <input type="email" id="comment-email" placeholder="邮箱（选填，不会公开）" maxlength="100">
+            </div>
+            <textarea id="comment-content" placeholder="写下你的评论..." maxlength="2000"></textarea>
+            <div style="margin-top:12px;text-align:right;">
+              <button class="btn btn-primary btn-sm" onclick="submitComment()">发表评论</button>
+            </div>
+          </div>
+        `;
+
+        if (data.comments.length === 0) {
+          html += `
+            <div class="empty-state" style="padding:30px;">
+              <div class="empty-state-icon">💭</div>
+              <h3>暂无评论</h3>
+              <p>快来抢沙发吧~</p>
+            </div>
+          `;
+        } else {
+          html += '<div class="comment-list">';
+          data.comments.forEach(comment => {
+            html += `
+              <div class="comment-item" id="comment-${comment.id}">
+                <div class="comment-header">
+                  <span class="comment-author">${utils.escapeHtml(comment.author_name || '匿名')}</span>
+                  <span class="comment-time">${utils.relativeTime(comment.created_at)}</span>
+                </div>
+                <div class="comment-content">${utils.escapeHtml(comment.content)}</div>
+                ${comment.status !== 'approved' ? `<div style="margin-top:8px;font-size:12px;color:var(--warning);">⏳ ${comment.status === 'pending' ? '待审核' : '已标记为垃圾评论'}</div>` : ''}
+                ${isAdmin ? `
+                  <div class="comment-actions">
+                    ${comment.status !== 'approved' ? `<button class="btn btn-sm btn-secondary" onclick="approveComment(${comment.id})">通过</button>` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="deleteComment(${comment.id})">删除</button>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">评论加载失败: ${e.message}</div>`;
+      }
+    }
+
+    // 提交评论
+    async function submitComment() {
+      const content = document.getElementById('comment-content').value.trim();
+      const name = document.getElementById('comment-name').value.trim();
+      const email = document.getElementById('comment-email').value.trim();
+
+      if (!content) {
+        utils.showMessage('请输入评论内容', 'error');
+        return;
+      }
+
+      try {
+        const result = await api.comments.create(currentSlug, {
+          author_name: name,
+          author_email: email,
+          content
+        });
+
+        utils.showMessage(result.message, 'success');
+        document.getElementById('comment-content').value = '';
+        document.getElementById('comment-name').value = '';
+        document.getElementById('comment-email').value = '';
+        
+        // 重新加载评论
+        setTimeout(loadComments, 1000);
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    // 删除评论（管理员）
+    async function deleteComment(id) {
+      if (!await utils.confirm('确定要删除这条评论吗？')) return;
+      
+      try {
+        await api.comments.delete(id);
+        utils.showMessage('删除成功', 'success');
+        loadComments();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    // 通过评论（管理员）
+    async function approveComment(id) {
+      try {
+        await api.comments.updateStatus(id, 'approved');
+        utils.showMessage('审核通过', 'success');
+        loadComments();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    // 加载友情链接
+    async function loadLinks() {
+      try {
+        const { links } = await api.links.list();
+        const list = document.getElementById('links-list');
+        
+        if (links.length === 0) {
+          list.innerHTML = '<li style="color:var(--text-light);font-size:14px;">暂无链接</li>';
+          return;
+        }
+
+        list.innerHTML = links.map(link => `
+          <li>
+            <a href="${utils.escapeHtml(link.url)}" target="_blank" rel="noopener" title="${utils.escapeHtml(link.description || '')}">
+              <span class="link-icon">${link.name.charAt(0).toUpperCase()}</span>
+              <span>${utils.escapeHtml(link.name)}</span>
+            </a>
+          </li>
+        `).join('');
+      } catch (e) {
+        document.getElementById('links-list').innerHTML = '<li style="color:var(--danger);font-size:14px;">加载失败</li>';
+      }
+    }
+
+    // 搜索
+    function doSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      if (query) {
+        window.location.href = `/search.html?q=${encodeURIComponent(query)}`;
+      }
+    }
+  </script>
+</body>
+</html>

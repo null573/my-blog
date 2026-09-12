@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>评论管理 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      renderPage();
+    }
+
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar('comments')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>💬 评论管理</h1>
+              <div>
+                <select id="status-filter" onchange="loadComments()" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);">
+                  <option value="all">全部评论</option>
+                  <option value="approved">已通过</option>
+                  <option value="pending">待审核</option>
+                  <option value="spam">垃圾评论</option>
+                </select>
+              </div>
+            </div>
+            <div class="admin-card">
+              <div id="comments-list">
+                <div class="empty-state">
+                  <div class="empty-state-icon">💭</div>
+                  <h3>暂无评论数据</h3>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      `;
+
+      loadComments();
+    }
+
+    async function loadComments() {
+      const container = document.getElementById('comments-list');
+      utils.showLoading(container);
+
+      try {
+        // 获取所有文章，然后获取每篇文章的评论
+        const postsData = await api.posts.list(1, 100, 'all');
+        let allComments = [];
+
+        for (const post of postsData.posts) {
+          try {
+            const commentsData = await api.comments.list(post.slug, 1, 100);
+            commentsData.comments.forEach(c => {
+              c.post_title = post.title;
+              c.post_slug = post.slug;
+            });
+            allComments = allComments.concat(commentsData.comments);
+          } catch (e) {
+            console.error('加载评论失败', post.slug, e);
+          }
+        }
+
+        // 按状态过滤
+        const statusFilter = document.getElementById('status-filter').value;
+        if (statusFilter !== 'all') {
+          allComments = allComments.filter(c => c.status === statusFilter);
+        }
+
+        // 按时间倒序
+        allComments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (allComments.length === 0) {
+          utils.showEmpty(container, '暂无评论', '💭');
+          return;
+        }
+
+        container.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>评论者</th>
+                <th>评论内容</th>
+                <th>所属文章</th>
+                <th>状态</th>
+                <th>时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allComments.map(comment => `
+                <tr id="comment-row-${comment.id}">
+                  <td>
+                    <div style="font-weight:500;">${utils.escapeHtml(comment.author_name || '匿名')}</div>
+                  </td>
+                  <td style="max-width:300px;">
+                    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${utils.escapeHtml(comment.content)}</div>
+                  </td>
+                  <td>
+                    <a href="/post.html?slug=${comment.post_slug}" target="_blank">${utils.escapeHtml(comment.post_title)}</a>
+                  </td>
+                  <td>
+                    <span class="tag" style="background:${
+                      comment.status === 'approved' ? '#dcfce7;color:#166534' :
+                      comment.status === 'pending' ? '#fef3c7;color:#92400e' :
+                      '#fee2e2;color:#991b1b'
+                    };">
+                      ${comment.status === 'approved' ? '已通过' : comment.status === 'pending' ? '待审核' : '垃圾评论'}
+                    </span>
+                  </td>
+                  <td>${utils.relativeTime(comment.created_at)}</td>
+                  <td>
+                    <div class="table-actions">
+                      ${comment.status !== 'approved' ? `<button class="btn btn-sm btn-primary" onclick="approveComment(${comment.id})">通过</button>` : ''}
+                      ${comment.status !== 'spam' ? `<button class="btn btn-sm btn-secondary" onclick="markSpam(${comment.id})">标记垃圾</button>` : ''}
+                      <button class="btn btn-sm btn-danger" onclick="deleteComment(${comment.id})">删除</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div style="margin-top:12px;color:var(--text-light);font-size:14px;">共 ${allComments.length} 条评论</div>
+        `;
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    async function approveComment(id) {
+      try {
+        await api.comments.updateStatus(id, 'approved');
+        utils.showMessage('审核通过', 'success');
+        loadComments();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    async function markSpam(id) {
+      try {
+        await api.comments.updateStatus(id, 'spam');
+        utils.showMessage('已标记为垃圾评论', 'success');
+        loadComments();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    async function deleteComment(id) {
+      if (!await utils.confirm('确定要删除这条评论吗？')) return;
+      
+      try {
+        await api.comments.delete(id);
+        utils.showMessage('删除成功', 'success');
+        loadComments();
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑文章 - 博客管理</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    let editSlug = null;
+    let isEditMode = false;
+    let showPreview = false;
+
+    if (!checkAdminAuth()) {
+      // 未登录会跳转
+    } else {
+      editSlug = utils.getQueryParam('slug');
+      isEditMode = !!editSlug;
+      renderPage();
+      if (isEditMode) {
+        loadPost();
+      }
+    }
+
+    function renderPage() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="admin-layout">
+          ${renderAdminSidebar(isEditMode ? 'posts' : 'new-post')}
+          <main class="admin-content">
+            <div class="admin-header">
+              <h1>${isEditMode ? '✏️ 编辑文章' : '📝 写新文章'}</h1>
+              <div style="display:flex;gap:12px;">
+                <button class="btn btn-secondary" onclick="togglePreview()">👁️ 预览</button>
+                <button class="btn btn-secondary" onclick="saveDraft()">💾 保存草稿</button>
+                <button class="btn btn-primary" onclick="publishArticle()">🚀 发布文章</button>
+              </div>
+            </div>
+            <div class="admin-card">
+              <div id="message"></div>
+              
+              <div class="form-group">
+                <label>文章标题 *</label>
+                <input type="text" id="post-title" placeholder="请输入文章标题" style="font-size:18px;padding:14px;">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>URL别名（slug）</label>
+                  <input type="text" id="post-slug" placeholder="留空则自动生成">
+                  <div class="form-help">文章的URL地址，如：my-first-post</div>
+                </div>
+                <div class="form-group">
+                  <label>封面图URL</label>
+                  <input type="text" id="post-cover" placeholder="封面图片地址（选填）">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>
+                    <label class="switch">
+                      <input type="checkbox" id="post-comments" checked>
+                      <span class="slider"></span>
+                    </label>
+                    允许评论
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label>状态</label>
+                  <select id="post-status">
+                    <option value="published">已发布</option>
+                    <option value="draft">草稿</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>文章内容 * (支持 Markdown)</label>
+                <div id="editor-container" class="editor-container" style="display:none;">
+                  <textarea id="post-content" placeholder="开始写作..." style="width:100%;min-height:500px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);font-family:Consolas,monospace;font-size:14px;line-height:1.6;resize:vertical;"></textarea>
+                  <div id="preview-panel" class="editor-preview">
+                    <p style="color:var(--text-light);">在左侧输入内容，这里会显示预览</p>
+                  </div>
+                </div>
+                <textarea id="post-content-simple" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用&#10;`代码`&#10;[链接文字](链接地址)" style="width:100%;min-height:500px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;line-height:1.8;resize:vertical;font-family:inherit;"></textarea>
+              </div>
+
+              <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+                <a href="/admin/posts.html" class="btn btn-secondary">← 返回列表</a>
+                <div style="display:flex;gap:12px;">
+                  ${isEditMode ? `<button class="btn btn-danger" onclick="deleteCurrentPost()">🗑️ 删除</button>` : ''}
+                  <button class="btn btn-primary" onclick="publishArticle()">🚀 ${isEditMode ? '保存修改' : '发布文章'}</button>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      `;
+
+      // 绑定内容变化事件
+      document.getElementById('post-content-simple').addEventListener('input', updatePreview);
+    }
+
+    async function loadPost() {
+      try {
+        const { post } = await api.posts.get(editSlug);
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-slug').value = post.slug;
+        document.getElementById('post-cover').value = post.cover_image || '';
+        document.getElementById('post-status').value = post.status;
+        document.getElementById('post-comments').checked = post.allow_comments === 1;
+        document.getElementById('post-content-simple').value = post.content;
+        document.title = `编辑: ${post.title} - 博客管理`;
+      } catch (e) {
+        document.getElementById('message').innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    function togglePreview() {
+      showPreview = !showPreview;
+      const editorContainer = document.getElementById('editor-container');
+      const simpleTextarea = document.getElementById('post-content-simple');
+      
+      if (showPreview) {
+        editorContainer.style.display = 'grid';
+        simpleTextarea.style.display = 'none';
+        document.getElementById('post-content').value = simpleTextarea.value;
+        updatePreview();
+        
+        // 同步输入
+        document.getElementById('post-content').addEventListener('input', function() {
+          simpleTextarea.value = this.value;
+          updatePreview();
+        });
+      } else {
+        editorContainer.style.display = 'none';
+        simpleTextarea.style.display = 'block';
+      }
+    }
+
+    function updatePreview() {
+      const content = document.getElementById('post-content-simple').value;
+      const preview = document.getElementById('preview-panel');
+      if (preview) {
+        preview.innerHTML = '<div class="post-content">' + utils.parseMarkdown(content) + '</div>';
+      }
+    }
+
+    function getFormData() {
+      return {
+        title: document.getElementById('post-title').value.trim(),
+        slug: document.getElementById('post-slug').value.trim(),
+        content: document.getElementById('post-content-simple').value,
+        cover_image: document.getElementById('post-cover').value.trim(),
+        status: document.getElementById('post-status').value,
+        allow_comments: document.getElementById('post-comments').checked
+      };
+    }
+
+    async function publishArticle() {
+      const data = getFormData();
+      
+      if (!data.title) {
+        utils.showMessage('请输入文章标题', 'error');
+        return;
+      }
+      if (!data.content) {
+        utils.showMessage('请输入文章内容', 'error');
+        return;
+      }
+
+      try {
+        let result;
+        if (isEditMode) {
+          result = await api.posts.update(editSlug, data);
+          utils.showMessage('保存成功', 'success');
+          if (result.slug && result.slug !== editSlug) {
+            setTimeout(() => {
+              window.location.href = `/admin/post-edit.html?slug=${result.slug}`;
+            }, 500);
+          }
+        } else {
+          data.status = 'published';
+          result = await api.posts.create(data);
+          utils.showMessage('发布成功', 'success');
+          setTimeout(() => {
+            window.location.href = `/admin/post-edit.html?slug=${result.slug}`;
+          }, 500);
+        }
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    async function saveDraft() {
+      const data = getFormData();
+      
+      if (!data.title) {
+        utils.showMessage('请输入文章标题', 'error');
+        return;
+      }
+
+      data.status = 'draft';
+
+      try {
+        let result;
+        if (isEditMode) {
+          result = await api.posts.update(editSlug, data);
+          utils.showMessage('草稿已保存', 'success');
+        } else {
+          result = await api.posts.create(data);
+          utils.showMessage('草稿已保存', 'success');
+          setTimeout(() => {
+            window.location.href = `/admin/post-edit.html?slug=${result.slug}`;
+          }, 500);
+        }
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+
+    async function deleteCurrentPost() {
+      if (!await utils.confirm('确定要删除这篇文章吗？此操作不可恢复！')) return;
+      
+      try {
+        await api.posts.delete(editSlug);
+        utils.showMessage('删除成功', 'success');
+        setTimeout(() => {
+          window.location.href = '/admin/posts.html';
+        }, 500);
+      } catch (e) {
+        utils.showMessage(e.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
