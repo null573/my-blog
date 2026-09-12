@@ -6,6 +6,89 @@
   <title>友情链接 - 博客管理</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+  <style>
+    /* 移动端优化：卡片式列表 */
+    .link-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .link-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .link-card-name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .link-card-url {
+      font-size: 13px;
+      color: var(--text-light);
+      word-break: break-all;
+      margin-bottom: 6px;
+    }
+    .link-card-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .link-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .link-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .link-card-actions .btn {
+      min-height: 40px;
+      min-width: 64px;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    .link-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    @media (max-width: 768px) {
+      .links-table-container {
+        display: none;
+      }
+      .links-mobile-list {
+        display: block;
+      }
+    }
+    @media (min-width: 769px) {
+      .links-table-container {
+        display: block;
+      }
+      .links-mobile-list {
+        display: none;
+      }
+    }
+    /* 模态框移动端优化 */
+    @media (max-width: 480px) {
+      .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+      .modal {
+        max-height: 85vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+      .modal-footer .btn {
+        min-height: 44px;
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -13,6 +96,8 @@
   <script src="/js/app.js"></script>
   <script src="/js/admin.js"></script>
   <script>
+    let allLinks = [];
+
     if (!checkAdminAuth()) {
       // 未登录会跳转
     } else {
@@ -30,7 +115,7 @@
               <button class="btn btn-primary" onclick="showAddModal()">+ 添加链接</button>
             </div>
             <div class="admin-card">
-              <div id="links-table">
+              <div id="links-container">
                 <div class="loading"><div class="spinner"></div></div>
               </div>
             </div>
@@ -86,18 +171,28 @@
     }
 
     async function loadLinks() {
-      const container = document.getElementById('links-table');
+      const container = document.getElementById('links-container');
       utils.showLoading(container);
 
       try {
         const { links } = await api.links.list();
+        allLinks = links;
         
         if (links.length === 0) {
           utils.showEmpty(container, '还没有友情链接', '🔗');
           return;
         }
 
-        container.innerHTML = `
+        container.innerHTML = renderLinksContent(links);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    function renderLinksContent(links) {
+      // 桌面端表格 + 移动端卡片列表
+      return `
+        <div class="links-table-container">
           <table class="data-table">
             <thead>
               <tr>
@@ -125,7 +220,7 @@
                   </td>
                   <td>
                     <div class="table-actions">
-                      <button class="btn btn-sm btn-secondary" onclick="editLink(${link.id}, ${JSON.stringify(link).replace(/"/g, '&quot;')})">编辑</button>
+                      <button class="btn btn-sm btn-secondary" onclick="editLinkById(${link.id})">编辑</button>
                       <button class="btn btn-sm btn-danger" onclick="deleteLink(${link.id})">删除</button>
                     </div>
                   </td>
@@ -133,10 +228,32 @@
               `).join('')}
             </tbody>
           </table>
-        `;
-      } catch (e) {
-        container.innerHTML = `<div class="alert alert-error">加载失败: ${e.message}</div>`;
-      }
+        </div>
+        <div class="links-mobile-list">
+          ${links.map(link => `
+            <div class="link-card">
+              <div class="link-card-header">
+                <span class="link-card-name">${utils.escapeHtml(link.name)}</span>
+                <span class="tag" style="background:${link.is_visible ? '#dcfce7;color:#166534' : '#f1f5f9;color:#64748b'};">
+                  ${link.is_visible ? '显示' : '隐藏'}
+                </span>
+              </div>
+              <div class="link-card-url">${utils.escapeHtml(link.url)}</div>
+              ${link.description ? `<div class="link-card-desc">${utils.escapeHtml(link.description)}</div>` : ''}
+              <div class="link-card-footer">
+                <div class="link-meta">
+                  <span>排序: ${link.sort_order}</span>
+                  <span>ID: ${link.id}</span>
+                </div>
+                <div class="link-card-actions">
+                  <button class="btn btn-secondary" onclick="editLinkById(${link.id})">编辑</button>
+                  <button class="btn btn-danger" onclick="deleteLink(${link.id})">删除</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     function showAddModal() {
@@ -150,7 +267,12 @@
       document.getElementById('link-modal').style.display = 'block';
     }
 
-    function editLink(id, link) {
+    function editLinkById(id) {
+      const link = allLinks.find(l => l.id === id);
+      if (!link) {
+        utils.showMessage('链接不存在', 'error');
+        return;
+      }
       document.getElementById('modal-title').textContent = '编辑友情链接';
       document.getElementById('link-id').value = id;
       document.getElementById('link-name').value = link.name;
