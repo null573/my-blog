@@ -1,22 +1,2 @@
-/admin/post-edit /admin/post-edit.html 200
-/admin/post-edit/ /admin/post-edit.html 200
-/admin/posts /admin/posts.html 200
-/admin/posts/ /admin/posts.html 200
-/admin/comments /admin/comments.html 200
-/admin/comments/ /admin/comments.html 200
-/admin/links /admin/links.html 200
-/admin/links/ /admin/links.html 200
-/admin/settings /admin/settings.html 200
-/admin/settings/ /admin/settings.html 200
-/admin/profile /admin/profile.html 200
-/admin/profile/ /admin/profile.html 200
-/admin/login /admin/login.html 200
-/admin/login/ /admin/login.html 200
-/post /post.html 200
-/post/ /post.html 200
-/search /search.html 200
-/search/ /search.html 200
-/contact /contact.html 200
-/contact/ /contact.html 200
-/promo /promo.html 200
-/promo/ /promo.html 200
+# Static HTML pretty URLs are served by Pages assets.
+# Rewriting /path to /path.html here causes ERR_TOO_MANY_REDIRECTS.
