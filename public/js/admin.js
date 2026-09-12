@@ -12,7 +12,7 @@ function renderAdminSidebar(activePage) {
     <aside class="admin-sidebar">
       <div style="padding:20px 24px;border-bottom:1px solid #334155;">
         <a href="/" style="color:white;font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:10px;">
-          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--primary),#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:bold;">B</div>
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--primary),#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:bold;">G</div>
           <span>博客管理</span>
         </a>
       </div>
