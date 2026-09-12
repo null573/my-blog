@@ -80,26 +80,26 @@ const api = {
       return api.get(`/posts?page=${page}&limit=${limit}&status=${status}`);
     },
     get(slug) {
-      return api.get(`/post/${slug}`);
+      return api.get(`/post/${encodeURIComponent(slug)}`);
     },
     create(data) {
       return api.post('/posts', data);
     },
     update(slug, data) {
-      return api.put(`/post/${slug}`, data);
+      return api.put(`/post/${encodeURIComponent(slug)}`, data);
     },
     delete(slug) {
-      return api.delete(`/post/${slug}`);
+      return api.delete(`/post/${encodeURIComponent(slug)}`);
     }
   },
 
   // 评论相关
   comments: {
     list(slug, page = 1, limit = 50) {
-      return api.get(`/post/${slug}/comments?page=${page}&limit=${limit}`);
+      return api.get(`/post/${encodeURIComponent(slug)}/comments?page=${page}&limit=${limit}`);
     },
     create(slug, data) {
-      return api.post(`/post/${slug}/comments`, data);
+      return api.post(`/post/${encodeURIComponent(slug)}/comments`, data);
     },
     delete(id) {
       return api.delete(`/admin/comment/${id}`);

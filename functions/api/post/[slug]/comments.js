@@ -3,7 +3,10 @@ import { jsonResponse, errorResponse, verifyAuth, getClientIP, generateId, getPo
 // 获取评论列表
 export async function onRequestGet(context) {
   const { request, env, params } = context;
-  const { slug } = params;
+  let { slug } = params;
+  
+  // 解码slug
+  try { slug = decodeURIComponent(slug); } catch(e) {}
 
   try {
     const post = await getPostBySlug(env, slug);
@@ -28,7 +31,10 @@ export async function onRequestGet(context) {
 // 发表评论
 export async function onRequestPost(context) {
   const { request, env, params } = context;
-  const { slug } = params;
+  let { slug } = params;
+  
+  // 解码slug
+  try { slug = decodeURIComponent(slug); } catch(e) {}
 
   try {
     const body = await request.json();

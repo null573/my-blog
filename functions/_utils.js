@@ -59,15 +59,17 @@ export function generateSummary(content, length = 200) {
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
 
-// 生成slug
+// 生成slug（纯ASCII安全）
 export function generateSlug(title) {
   let slug = title.toLowerCase()
-    .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+    .replace(/[^\w\s-]/g, '')  // 移除非ASCII字符（含中文）
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
     .trim();
+  // 如果为空（纯中文标题），用短时间戳
   if (!slug) {
-    slug = 'post-' + Date.now();
+    slug = 'p-' + Date.now().toString(36);
   }
   return slug;
 }
@@ -104,9 +106,16 @@ export async function getPostsList(env, status = 'published', page = 1, limit = 
   };
 }
 
-// 获取单篇文章
+// 获取单篇文章（自动解码URL编码的slug）
 export async function getPostBySlug(env, slug) {
-  const post = await env.BLOG_KV.get(`post:${slug}`, { type: 'json' });
+  // 尝试解码URL编码的slug
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch (e) {
+    // 如果解码失败，使用原始值
+  }
+  const post = await env.BLOG_KV.get(`post:${decodedSlug}`, { type: 'json' });
   return post;
 }
 

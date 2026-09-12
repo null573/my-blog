@@ -1,9 +1,14 @@
 import { jsonResponse, errorResponse, verifyAuth, generateSummary, generateSlug, getPostBySlug, savePost, deletePost } from '../../_utils';
 
+// 解码slug
+function decodeSlug(slug) {
+  try { return decodeURIComponent(slug); } catch(e) { return slug; }
+}
+
 // 获取单篇文章
 export async function onRequestGet(context) {
   const { request, env, params } = context;
-  const { slug } = params;
+  const slug = decodeSlug(params.slug);
 
   try {
     const post = await getPostBySlug(env, slug);
@@ -20,7 +25,6 @@ export async function onRequestGet(context) {
     // 增加阅读量
     if (!admin) {
       post.views = (post.views || 0) + 1;
-      post.updated_at = new Date().toISOString();
       await savePost(env, post);
     }
 
@@ -33,7 +37,7 @@ export async function onRequestGet(context) {
 // 更新文章
 export async function onRequestPut(context) {
   const { request, env, params } = context;
-  const { slug } = params;
+  const slug = decodeSlug(params.slug);
 
   const admin = await verifyAuth(request, env);
   if (!admin) {
@@ -103,7 +107,7 @@ export async function onRequestPut(context) {
 // 删除文章
 export async function onRequestDelete(context) {
   const { request, env, params } = context;
-  const { slug } = params;
+  const slug = decodeSlug(params.slug);
 
   const admin = await verifyAuth(request, env);
   if (!admin) {
