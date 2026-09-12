@@ -1,18 +1,14 @@
-import { jsonResponse } from '../_utils';
+import { jsonResponse, getPostsList, getSettings } from './_utils';
 
 // 生成sitemap.xml
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
 
   try {
-    const db = env.DB;
-    const posts = await db.prepare(`
-      SELECT slug, updated_at FROM posts WHERE status = 'published' ORDER BY created_at DESC
-    `).all();
+    const result = await getPostsList(env, 'published', 1, 1000);
+    const posts = result.posts;
 
-    // 获取站点设置
-    const siteTitle = await db.prepare("SELECT value FROM settings WHERE key = 'site_title'").first();
-    const baseUrl = new URL(context.request.url).origin;
+    const baseUrl = new URL(request.url).origin;
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -32,7 +28,7 @@ export async function onRequestGet(context) {
     <priority>0.6</priority>
   </url>`;
 
-    posts.results.forEach(post => {
+    posts.forEach(post => {
       const lastmod = post.updated_at ? new Date(post.updated_at).toISOString().split('T')[0] : '';
       xml += `
   <url>

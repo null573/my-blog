@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getLinks, saveLink } from '../_utils';
 
 // 获取友情链接列表
 export async function onRequestGet(context) {
@@ -7,17 +7,8 @@ export async function onRequestGet(context) {
   const admin = await verifyAuth(request, env);
   
   try {
-    const db = env.DB;
-    let query = 'SELECT * FROM links';
-    let params = [];
-    
-    if (!admin) {
-      query += ' WHERE is_visible = 1';
-    }
-    query += ' ORDER BY sort_order ASC, id ASC';
-    
-    const links = await db.prepare(query).bind(...params).all();
-    return jsonResponse({ links: links.results });
+    const links = await getLinks(env, !!admin);
+    return jsonResponse({ links });
   } catch (e) {
     return errorResponse(e.message, 500);
   }
@@ -40,14 +31,17 @@ export async function onRequestPost(context) {
       return errorResponse('名称和链接不能为空', 400);
     }
 
-    const db = env.DB;
-    const result = await db.prepare(`
-      INSERT INTO links (name, url, description, sort_order, is_visible)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(name, url, description, sort_order, is_visible ? 1 : 0).run();
+    const link = await saveLink(env, {
+      name,
+      url,
+      description,
+      sort_order: parseInt(sort_order) || 0,
+      is_visible: is_visible ? 1 : 0,
+      created_at: new Date().toISOString()
+    });
 
     return jsonResponse({
-      id: result.meta.last_row_id,
+      id: link.id,
       message: '添加成功'
     }, 201);
   } catch (e) {

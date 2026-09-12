@@ -7,10 +7,15 @@
     "dev": "wrangler pages dev public --d1 DB --kv BLOG_KV",
     "deploy": "wrangler pages deploy public"
   },
-  "keywords": ["blog", "cloudflare", "pages", "d1"],
+  "keywords": [
+    "blog",
+    "cloudflare",
+    "pages",
+    "d1"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "^3.114.17"
   }
 }

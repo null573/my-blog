@@ -1,38 +1,48 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getPostsList, getPostBySlug } from '../../_utils';
 
-// 导出所有博客为文本/Markdown
+// 导出所有博客为Markdown
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  const admin = await verifyAuth(request, env);
+  // 支持通过query参数传递token（用于下载链接）
+  const token = new URL(request.url).searchParams.get('token');
+  let admin = null;
+  
+  if (token) {
+    const adminSession = await env.BLOG_KV.get(`session:${token}`);
+    if (adminSession) {
+      admin = JSON.parse(adminSession);
+    }
+  } else {
+    admin = await verifyAuth(request, env);
+  }
+
   if (!admin) {
     return errorResponse('请先登录', 401);
   }
 
   try {
-    const db = env.DB;
-    const posts = await db.prepare(`
-      SELECT id, title, slug, content, status, views, created_at, updated_at
-      FROM posts
-      ORDER BY created_at DESC
-    `).all();
+    // 获取所有文章
+    const result = await getPostsList(env, 'all', 1, 1000);
+    const posts = result.posts;
 
     // 生成Markdown格式的导出
-    let exportContent = `# 博客导出\n\n导出时间: ${new Date().toLocaleString('zh-CN')}\n文章数量: ${posts.results.length}\n\n---\n\n`;
+    let exportContent = `# 博客导出\n\n导出时间: ${new Date().toLocaleString('zh-CN')}\n文章数量: ${posts.length}\n\n---\n\n`;
 
-    posts.results.forEach((post, index) => {
-      exportContent += `## ${index + 1}. ${post.title}\n\n`;
+    for (let i = 0; i < posts.length; i++) {
+      const postListItem = posts[i];
+      const fullPost = await getPostBySlug(env, postListItem.slug);
+      const post = fullPost || postListItem;
+      
+      exportContent += `## ${i + 1}. ${post.title}\n\n`;
       exportContent += `- 别名: ${post.slug}\n`;
       exportContent += `- 状态: ${post.status}\n`;
-      exportContent += `- 阅读量: ${post.views}\n`;
+      exportContent += `- 阅读量: ${post.views || 0}\n`;
       exportContent += `- 创建时间: ${post.created_at}\n`;
       exportContent += `- 更新时间: ${post.updated_at}\n\n`;
-      exportContent += `---\n\n${post.content}\n\n`;
+      exportContent += `---\n\n${post.content || ''}\n\n`;
       exportContent += `---\n\n`;
-    });
-
-    // 也导出JSON格式
-    const jsonExport = JSON.stringify(posts.results, null, 2);
+    }
 
     return new Response(exportContent, {
       headers: {

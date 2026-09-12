@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getLinks, saveLink, deleteLink } from '../../_utils';
 
 // 更新友情链接
 export async function onRequestPut(context) {
@@ -12,31 +12,18 @@ export async function onRequestPut(context) {
 
   try {
     const body = await request.json();
-    const { name, url, description, sort_order, is_visible } = body;
-
-    const db = env.DB;
-    const fields = [];
-    const values = [];
-
-    if (name !== undefined) { fields.push('name = ?'); values.push(name); }
-    if (url !== undefined) { fields.push('url = ?'); values.push(url); }
-    if (description !== undefined) { fields.push('description = ?'); values.push(description); }
-    if (sort_order !== undefined) { fields.push('sort_order = ?'); values.push(sort_order); }
-    if (is_visible !== undefined) { fields.push('is_visible = ?'); values.push(is_visible ? 1 : 0); }
-
-    if (fields.length === 0) {
-      return errorResponse('没有需要更新的字段', 400);
-    }
-
-    values.push(id);
-    const result = await db.prepare(`
-      UPDATE links SET ${fields.join(', ')} WHERE id = ?
-    `).bind(...values).run();
-
-    if (result.meta.changes === 0) {
+    const links = await getLinks(env, true);
+    const existing = links.find(l => l.id === id);
+    
+    if (!existing) {
       return errorResponse('链接不存在', 404);
     }
 
+    const updated = { ...existing, ...body };
+    if (body.sort_order !== undefined) updated.sort_order = parseInt(body.sort_order) || 0;
+    if (body.is_visible !== undefined) updated.is_visible = body.is_visible ? 1 : 0;
+
+    await saveLink(env, updated);
     return jsonResponse({ message: '更新成功' });
   } catch (e) {
     return errorResponse(e.message, 500);
@@ -54,13 +41,14 @@ export async function onRequestDelete(context) {
   }
 
   try {
-    const db = env.DB;
-    const result = await db.prepare('DELETE FROM links WHERE id = ?').bind(id).run();
+    const links = await getLinks(env, true);
+    const existing = links.find(l => l.id === id);
     
-    if (result.meta.changes === 0) {
+    if (!existing) {
       return errorResponse('链接不存在', 404);
     }
 
+    await deleteLink(env, id);
     return jsonResponse({ message: '删除成功' });
   } catch (e) {
     return errorResponse(e.message, 500);

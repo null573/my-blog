@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, verifyAuth, hashPassword } from '../../_utils';
+import { jsonResponse, errorResponse, verifyAuth, hashPassword, updateAdminPassword } from '../../_utils';
 
 // 修改密码
 export async function onRequestPost(context) {
@@ -21,20 +21,15 @@ export async function onRequestPost(context) {
       return errorResponse('新密码至少6位', 400);
     }
 
-    const db = env.DB;
     const oldHash = await hashPassword(oldPassword);
-    const existing = await db.prepare(`
-      SELECT id FROM admins WHERE id = ? AND password_hash = ?
-    `).bind(admin.id, oldHash).first();
+    const adminData = await env.BLOG_KV.get('admin:user', { type: 'json' });
 
-    if (!existing) {
+    if (!adminData || adminData.password_hash !== oldHash) {
       return errorResponse('旧密码错误', 400);
     }
 
     const newHash = await hashPassword(newPassword);
-    await db.prepare(`
-      UPDATE admins SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    `).bind(newHash, admin.id).run();
+    await updateAdminPassword(env, admin.id, newHash);
 
     return jsonResponse({ message: '密码修改成功' });
   } catch (e) {

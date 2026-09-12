@@ -1,19 +1,12 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getSettings, saveSettings } from '../_utils';
 
 // 获取设置
 export async function onRequestGet(context) {
   const { env } = context;
 
   try {
-    const db = env.DB;
-    const settings = await db.prepare('SELECT key, value FROM settings').all();
-    
-    const result = {};
-    settings.results.forEach(s => {
-      result[s.key] = s.value;
-    });
-
-    return jsonResponse({ settings: result });
+    const settings = await getSettings(env);
+    return jsonResponse({ settings });
   } catch (e) {
     return errorResponse(e.message, 500);
   }
@@ -30,22 +23,8 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const db = env.DB;
-
-    for (const [key, value] of Object.entries(body)) {
-      const existing = await db.prepare('SELECT key FROM settings WHERE key = ?').bind(key).first();
-      if (existing) {
-        await db.prepare(`
-          UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?
-        `).bind(String(value), key).run();
-      } else {
-        await db.prepare(`
-          INSERT INTO settings (key, value) VALUES (?, ?)
-        `).bind(key, String(value)).run();
-      }
-    }
-
-    return jsonResponse({ message: '设置更新成功' });
+    const settings = await saveSettings(env, body);
+    return jsonResponse({ message: '设置更新成功', settings });
   } catch (e) {
     return errorResponse(e.message, 500);
   }

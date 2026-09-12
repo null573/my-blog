@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../../../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getPostsList, getComments, deleteComment, updateCommentStatus } from '../../../_utils';
 
 // 管理员删除评论
 export async function onRequestDelete(context) {
@@ -11,10 +11,21 @@ export async function onRequestDelete(context) {
   }
 
   try {
-    const db = env.DB;
-    const result = await db.prepare('DELETE FROM comments WHERE id = ?').bind(id).run();
-    
-    if (result.meta.changes === 0) {
+    // 遍历所有文章找到该评论
+    const result = await getPostsList(env, 'all', 1, 1000);
+    let found = false;
+
+    for (const post of result.posts) {
+      const comments = await getComments(env, post.slug, true);
+      const comment = comments.find(c => c.id === id);
+      if (comment) {
+        await deleteComment(env, post.slug, id);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
       return errorResponse('评论不存在', 404);
     }
 
@@ -24,7 +35,7 @@ export async function onRequestDelete(context) {
   }
 }
 
-// 管理员审核评论（通过/拒绝）
+// 管理员审核评论
 export async function onRequestPut(context) {
   const { request, env, params } = context;
   const { id } = params;
@@ -36,18 +47,27 @@ export async function onRequestPut(context) {
 
   try {
     const body = await request.json();
-    const { status } = body; // approved, pending, spam
+    const { status } = body;
 
     if (!['approved', 'pending', 'spam'].includes(status)) {
       return errorResponse('无效的状态', 400);
     }
 
-    const db = env.DB;
-    const result = await db.prepare(`
-      UPDATE comments SET status = ? WHERE id = ?
-    `).bind(status, id).run();
+    // 遍历所有文章找到该评论
+    const result = await getPostsList(env, 'all', 1, 1000);
+    let found = false;
 
-    if (result.meta.changes === 0) {
+    for (const post of result.posts) {
+      const comments = await getComments(env, post.slug, true);
+      const comment = comments.find(c => c.id === id);
+      if (comment) {
+        await updateCommentStatus(env, post.slug, id, status);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
       return errorResponse('评论不存在', 404);
     }
 

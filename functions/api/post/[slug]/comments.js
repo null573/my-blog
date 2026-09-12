@@ -1,43 +1,23 @@
-import { jsonResponse, errorResponse, verifyAuth, getClientIP } from '../../_utils';
+import { jsonResponse, errorResponse, verifyAuth, getClientIP, generateId, getPostBySlug, getComments, addComment, getSettings } from '../../../_utils';
 
 // 获取评论列表
 export async function onRequestGet(context) {
   const { request, env, params } = context;
   const { slug } = params;
-  const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') || '1');
-  const limit = parseInt(url.searchParams.get('limit') || '50');
-  const offset = (page - 1) * limit;
 
   try {
-    const db = env.DB;
-    const post = await db.prepare('SELECT id, allow_comments FROM posts WHERE slug = ?').bind(slug).first();
+    const post = await getPostBySlug(env, slug);
     
     if (!post) {
       return errorResponse('文章不存在', 404);
     }
 
     const admin = await verifyAuth(request, env);
-    let statusFilter = "status = 'approved'";
-    if (admin) {
-      statusFilter = "1=1"; // 管理员看所有
-    }
-
-    const comments = await db.prepare(`
-      SELECT id, author_name, content, status, created_at
-      FROM comments
-      WHERE post_id = ? AND ${statusFilter}
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `).bind(post.id, limit, offset).all();
-
-    const totalResult = await db.prepare(`
-      SELECT COUNT(*) as total FROM comments WHERE post_id = ? AND ${statusFilter}
-    `).bind(post.id).first();
+    const comments = await getComments(env, slug, !!admin);
 
     return jsonResponse({
-      comments: comments.results,
-      total: totalResult.total,
+      comments,
+      total: comments.length,
       allow_comments: post.allow_comments === 1
     });
   } catch (e) {
@@ -62,8 +42,7 @@ export async function onRequestPost(context) {
       return errorResponse('评论内容不能超过2000字', 400);
     }
 
-    const db = env.DB;
-    const post = await db.prepare('SELECT id, allow_comments, status FROM posts WHERE slug = ?').bind(slug).first();
+    const post = await getPostBySlug(env, slug);
     
     if (!post || post.status !== 'published') {
       return errorResponse('文章不存在', 404);
@@ -76,17 +55,24 @@ export async function onRequestPost(context) {
     const ip = getClientIP(request);
     
     // 检查是否需要审核
-    const moderationSetting = await db.prepare("SELECT value FROM settings WHERE key = 'comments_moderation'").first();
-    const needsModeration = moderationSetting && moderationSetting.value === '1';
+    const settings = await getSettings(env);
+    const needsModeration = settings.comments_moderation === '1';
     const status = needsModeration ? 'pending' : 'approved';
 
-    const result = await db.prepare(`
-      INSERT INTO comments (post_id, author_name, author_email, content, ip_address, status)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).bind(post.id, author_name.substring(0, 50), author_email.substring(0, 100), content.substring(0, 2000), ip, status).run();
+    const comment = {
+      id: generateId(),
+      author_name: (author_name || '匿名').substring(0, 50),
+      author_email: (author_email || '').substring(0, 100),
+      content: content.substring(0, 2000),
+      ip_address: ip,
+      status,
+      created_at: new Date().toISOString()
+    };
+
+    await addComment(env, slug, comment);
 
     return jsonResponse({
-      id: result.meta.last_row_id,
+      id: comment.id,
       message: needsModeration ? '评论提交成功，等待审核' : '评论发表成功',
       status
     }, 201);

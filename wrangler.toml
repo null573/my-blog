@@ -1,14 +1,7 @@
-name = "my-blog"
+name = "myblog"
+pages_build_output_dir = "public"
 compatibility_date = "2024-01-01"
-
-[vars]
-ENV = "production"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "blog-db"
-database_id = "your-database-id"
 
 [[kv_namespaces]]
 binding = "BLOG_KV"
-id = "your-kv-namespace-id"
+id = "0b55880185c745ada0f353e40ce290e8"

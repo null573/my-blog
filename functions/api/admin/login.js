@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, hashPassword, generateToken, verifyAuth } from '../_utils';
+import { jsonResponse, errorResponse, hashPassword, generateToken, initAdmin, getAdmin } from '../../_utils';
 
 // 管理员登录
 export async function onRequestPost(context) {
@@ -12,26 +12,13 @@ export async function onRequestPost(context) {
       return errorResponse('用户名和密码不能为空', 400);
     }
 
-    const db = env.DB;
-    
-    // 检查是否有管理员账号
-    const adminCount = await db.prepare('SELECT COUNT(*) as count FROM admins').first();
-    
-    // 如果没有管理员，创建默认管理员
-    if (adminCount.count === 0) {
-      const defaultPassword = 'admin123';
-      const passwordHash = await hashPassword(defaultPassword);
-      await db.prepare(`
-        INSERT INTO admins (username, password_hash) VALUES ('admin', ?)
-      `).bind(passwordHash).run();
-    }
+    // 初始化管理员账号（首次登录时）
+    await initAdmin(env);
 
     const passwordHash = await hashPassword(password);
-    const admin = await db.prepare(`
-      SELECT id, username FROM admins WHERE username = ? AND password_hash = ?
-    `).bind(username, passwordHash).first();
+    const admin = await getAdmin(env, username);
 
-    if (!admin) {
+    if (!admin || admin.password_hash !== passwordHash) {
       return errorResponse('用户名或密码错误', 401);
     }
 
@@ -41,7 +28,7 @@ export async function onRequestPost(context) {
       id: admin.id,
       username: admin.username,
       loginAt: Date.now()
-    }), { expirationTtl: 60 * 60 * 24 * 7 }); // 7天有效期
+    }), { expirationTtl: 60 * 60 * 24 * 7 });
 
     return jsonResponse({
       token,

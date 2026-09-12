@@ -1,4 +1,4 @@
-import { jsonResponse, errorResponse, verifyAuth } from '../../_utils';
+import { jsonResponse, verifyAuth } from '../../_utils';
 
 // 管理员退出
 export async function onRequestPost(context) {
