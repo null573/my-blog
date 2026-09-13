@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>编辑文章 - 博客管理</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
@@ -31,20 +31,19 @@
     function renderPage() {
       const app = document.getElementById('app');
       app.innerHTML = `
-        <div class="admin-layout">
+        <div class="admin-layout post-edit-layout">
           ${renderAdminSidebar(isEditMode ? 'posts' : 'new-post')}
           <main class="admin-content post-edit-content">
-            <div class="admin-header post-edit-header">
+            <div class="post-edit-header">
               <h1>${isEditMode ? '✏️ 编辑文章' : '📝 写新文章'}</h1>
               <div class="post-edit-actions">
                 <button class="btn btn-secondary post-edit-btn" onclick="togglePreview()">👁️ 预览</button>
                 <button class="btn btn-secondary post-edit-btn" onclick="saveDraft()">💾 草稿</button>
-                <button class="btn btn-primary post-edit-btn" onclick="publishArticle()">🚀 发布</button>
               </div>
             </div>
             <div class="admin-card post-edit-card">
               <div id="message"></div>
-              
+
               <div class="form-group">
                 <label>文章标题 *</label>
                 <input type="text" id="post-title" class="post-title-input" placeholder="请输入文章标题">
@@ -52,24 +51,21 @@
 
               <div class="form-row post-edit-form-row">
                 <div class="form-group">
-                  <label>URL别名（slug）</label>
-                  <input type="text" id="post-slug" placeholder="留空则自动生成">
-                  <div class="form-help">文章的URL地址，如：my-first-post</div>
+                  <label>URL别名</label>
+                  <input type="text" id="post-slug" placeholder="留空自动生成">
                 </div>
                 <div class="form-group">
                   <label>封面图URL</label>
-                  <input type="text" id="post-cover" placeholder="封面图片地址（选填）">
+                  <input type="text" id="post-cover" placeholder="选填">
                 </div>
               </div>
 
               <div class="form-row post-edit-form-row">
-                <div class="form-group">
-                  <label class="switch-label">
-                    <label class="switch">
-                      <input type="checkbox" id="post-comments" checked>
-                      <span class="slider"></span>
-                    </label>
-                    允许评论
+                <div class="form-group post-edit-switch-group">
+                  <label>允许评论</label>
+                  <label class="switch">
+                    <input type="checkbox" id="post-comments" checked>
+                    <span class="slider"></span>
                   </label>
                 </div>
                 <div class="form-group">
@@ -81,26 +77,25 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label>文章内容 * (支持 Markdown)</label>
+              <div class="form-group post-edit-editor-group">
+                <label>文章内容 * <span class="post-edit-hint">支持 Markdown</span></label>
                 <div id="editor-container" class="editor-container" style="display:none;">
                   <textarea id="post-content" class="post-content-textarea" placeholder="开始写作..."></textarea>
                   <div id="preview-panel" class="editor-preview">
                     <p class="preview-placeholder">在左侧输入内容，这里会显示预览</p>
                   </div>
                 </div>
-                <textarea id="post-content-simple" class="post-content-simple" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用&#10;\`代码\`&#10;[链接文字](链接地址)"></textarea>
-              </div>
-
-              <div class="post-edit-footer">
-                <a href="/admin/posts.html" class="btn btn-secondary post-edit-btn">← 返回列表</a>
-                <div class="post-edit-footer-actions">
-                  ${isEditMode ? `<button class="btn btn-danger post-edit-btn" onclick="deleteCurrentPost()">🗑️ 删除</button>` : ''}
-                  <button class="btn btn-primary post-edit-btn" onclick="publishArticle()">🚀 ${isEditMode ? '保存修改' : '发布文章'}</button>
-                </div>
+                <textarea id="post-content-simple" class="post-content-simple" placeholder="开始写作..."></textarea>
               </div>
             </div>
           </main>
+
+          <!-- 固定底部操作栏 -->
+          <div class="post-edit-bottombar">
+            <a href="/admin/posts.html" class="btn btn-secondary post-edit-bottombar-btn">← 返回</a>
+            ${isEditMode ? `<button class="btn btn-danger post-edit-bottombar-btn" onclick="deleteCurrentPost()">🗑️</button>` : ''}
+            <button class="btn btn-primary post-edit-bottombar-btn post-edit-publish-btn" onclick="publishArticle()">🚀 ${isEditMode ? '保存' : '发布'}</button>
+          </div>
         </div>
       `;
 
@@ -127,14 +122,13 @@
       showPreview = !showPreview;
       const editorContainer = document.getElementById('editor-container');
       const simpleTextarea = document.getElementById('post-content-simple');
-      
+
       if (showPreview) {
         editorContainer.style.display = 'grid';
         simpleTextarea.style.display = 'none';
         document.getElementById('post-content').value = simpleTextarea.value;
         updatePreview();
-        
-        // 同步输入
+
         document.getElementById('post-content').addEventListener('input', function() {
           simpleTextarea.value = this.value;
           updatePreview();
@@ -166,7 +160,7 @@
 
     async function publishArticle() {
       const data = getFormData();
-      
+
       if (!data.title) {
         utils.showMessage('请输入文章标题', 'error');
         return;
@@ -201,7 +195,7 @@
 
     async function saveDraft() {
       const data = getFormData();
-      
+
       if (!data.title) {
         utils.showMessage('请输入文章标题', 'error');
         return;
@@ -228,7 +222,7 @@
 
     async function deleteCurrentPost() {
       if (!await utils.confirm('确定要删除这篇文章吗？此操作不可恢复！')) return;
-      
+
       try {
         await api.posts.delete(editSlug);
         utils.showMessage('删除成功', 'success');

@@ -1376,14 +1376,48 @@ html {
 }
 
 /* ===== 写文章页面样式 ===== */
-.post-edit-content {
-  padding: 16px 12px;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+.post-edit-layout {
+  position: relative;
 }
 
+.post-edit-content {
+  padding: 16px 12px;
+  padding-bottom: 80px;
+}
+
+/* 固定底部操作栏 */
+.post-edit-bottombar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  background: white;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+  z-index: 100;
+}
+
+.post-edit-bottombar-btn {
+  min-height: 44px;
+  font-size: 15px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-edit-publish-btn {
+  flex: 1;
+}
+
+/* 顶部标题+按钮 */
 .post-edit-header {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 10px;
   margin-bottom: 16px;
 }
@@ -1406,6 +1440,7 @@ html {
   padding: 8px 10px;
 }
 
+/* 卡片 */
 .post-edit-card {
   padding: 14px;
 }
@@ -1415,8 +1450,30 @@ html {
   padding: 12px !important;
 }
 
+/* 表单行 */
 .post-edit-form-row {
   gap: 12px;
+}
+
+/* 开关组 */
+.post-edit-switch-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-edit-switch-group .switch {
+  margin-top: 4px;
+}
+
+/* 编辑器 */
+.post-edit-editor-group {
+  margin-bottom: 0;
+}
+
+.post-edit-hint {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: normal;
 }
 
 .post-content-textarea {
@@ -1433,7 +1490,7 @@ html {
 
 .post-content-simple {
   width: 100%;
-  min-height: 300px;
+  min-height: 35vh;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1447,44 +1504,6 @@ html {
   color: var(--text-light);
 }
 
-.post-edit-footer {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.post-edit-footer .btn {
-  width: 100%;
-  text-align: center;
-  min-height: 42px;
-}
-
-.post-edit-footer-actions {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.post-edit-footer-actions .btn {
-  flex: 1;
-  min-height: 42px;
-}
-
-.switch-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 15px;
-}
-
-.switch-label > .switch {
-  flex-shrink: 0;
-}
-
 /* 桌面端调整 */
 @media (min-width: 769px) {
   .post-edit-content {
@@ -1492,9 +1511,32 @@ html {
     padding-bottom: 30px;
   }
 
+  /* 桌面端隐藏固定底部栏，用内联 footer */
+  .post-edit-bottombar {
+    position: static;
+    padding: 16px 0 0;
+    padding-bottom: 0;
+    background: transparent;
+    border-top: 1px solid var(--border);
+    box-shadow: none;
+    justify-content: flex-end;
+  }
+
+  .post-edit-bottombar-btn {
+    min-height: 38px;
+    width: auto;
+    padding: 8px 20px;
+    flex: none;
+  }
+
+  .post-edit-publish-btn {
+    flex: none;
+  }
+
   .post-edit-header {
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
   }
 
   .post-edit-actions {
@@ -1519,21 +1561,6 @@ html {
   .post-content-simple {
     min-height: 500px;
   }
-
-  .post-edit-footer {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .post-edit-footer .btn {
-    width: auto;
-    min-height: 38px;
-  }
-
-  .post-edit-footer-actions {
-    width: auto;
-  }
 }
 
 /* 平板端 */
@@ -1546,8 +1573,8 @@ html {
 /* 手机端 */
 @media (max-width: 480px) {
   .post-edit-content {
-    padding: 14px 10px;
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 10px;
+    padding-bottom: 80px;
   }
 
   .post-edit-header h1 {
@@ -1574,9 +1601,21 @@ html {
 
   .post-content-textarea,
   .post-content-simple {
-    min-height: 280px;
+    min-height: 30vh;
     padding: 10px;
     font-size: 16px;
+  }
+
+  .post-edit-bottombar {
+    padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+  }
+
+  .post-edit-bottombar-btn {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 8px 8px;
   }
 
   .form-group label {
