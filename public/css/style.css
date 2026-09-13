@@ -90,6 +90,56 @@ header {
   gap: 10px;
 }
 
+.logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+}
+
+.logo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.logo-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-hover, #f5f3ff);
+}
+
+.logo-action-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.logo-action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .logo-actions {
+    margin-left: 8px;
+    gap: 6px;
+  }
+  .logo-action-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
 .logo-icon {
   width: 36px;
   height: 36px;
