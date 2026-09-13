@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>编辑文章 - 博客管理</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
@@ -33,24 +33,24 @@
       app.innerHTML = `
         <div class="admin-layout">
           ${renderAdminSidebar(isEditMode ? 'posts' : 'new-post')}
-          <main class="admin-content">
-            <div class="admin-header">
+          <main class="admin-content post-edit-content">
+            <div class="admin-header post-edit-header">
               <h1>${isEditMode ? '✏️ 编辑文章' : '📝 写新文章'}</h1>
-              <div style="display:flex;gap:12px;">
-                <button class="btn btn-secondary" onclick="togglePreview()">👁️ 预览</button>
-                <button class="btn btn-secondary" onclick="saveDraft()">💾 保存草稿</button>
-                <button class="btn btn-primary" onclick="publishArticle()">🚀 发布文章</button>
+              <div class="post-edit-actions">
+                <button class="btn btn-secondary post-edit-btn" onclick="togglePreview()">👁️ 预览</button>
+                <button class="btn btn-secondary post-edit-btn" onclick="saveDraft()">💾 草稿</button>
+                <button class="btn btn-primary post-edit-btn" onclick="publishArticle()">🚀 发布</button>
               </div>
             </div>
-            <div class="admin-card">
+            <div class="admin-card post-edit-card">
               <div id="message"></div>
               
               <div class="form-group">
                 <label>文章标题 *</label>
-                <input type="text" id="post-title" placeholder="请输入文章标题" style="font-size:18px;padding:14px;">
+                <input type="text" id="post-title" class="post-title-input" placeholder="请输入文章标题">
               </div>
 
-              <div class="form-row">
+              <div class="form-row post-edit-form-row">
                 <div class="form-group">
                   <label>URL别名（slug）</label>
                   <input type="text" id="post-slug" placeholder="留空则自动生成">
@@ -62,9 +62,9 @@
                 </div>
               </div>
 
-              <div class="form-row">
+              <div class="form-row post-edit-form-row">
                 <div class="form-group">
-                  <label>
+                  <label class="switch-label">
                     <label class="switch">
                       <input type="checkbox" id="post-comments" checked>
                       <span class="slider"></span>
@@ -84,19 +84,19 @@
               <div class="form-group">
                 <label>文章内容 * (支持 Markdown)</label>
                 <div id="editor-container" class="editor-container" style="display:none;">
-                  <textarea id="post-content" placeholder="开始写作..." style="width:100%;min-height:500px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);font-family:Consolas,monospace;font-size:14px;line-height:1.6;resize:vertical;"></textarea>
+                  <textarea id="post-content" class="post-content-textarea" placeholder="开始写作..."></textarea>
                   <div id="preview-panel" class="editor-preview">
-                    <p style="color:var(--text-light);">在左侧输入内容，这里会显示预览</p>
+                    <p class="preview-placeholder">在左侧输入内容，这里会显示预览</p>
                   </div>
                 </div>
-                <textarea id="post-content-simple" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用&#10;\`代码\`&#10;[链接文字](链接地址)" style="width:100%;min-height:500px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;line-height:1.8;resize:vertical;font-family:inherit;"></textarea>
+                <textarea id="post-content-simple" class="post-content-simple" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用&#10;\`代码\`&#10;[链接文字](链接地址)"></textarea>
               </div>
 
-              <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
-                <a href="/admin/posts.html" class="btn btn-secondary">← 返回列表</a>
-                <div style="display:flex;gap:12px;">
-                  ${isEditMode ? `<button class="btn btn-danger" onclick="deleteCurrentPost()">🗑️ 删除</button>` : ''}
-                  <button class="btn btn-primary" onclick="publishArticle()">🚀 ${isEditMode ? '保存修改' : '发布文章'}</button>
+              <div class="post-edit-footer">
+                <a href="/admin/posts.html" class="btn btn-secondary post-edit-btn">← 返回列表</a>
+                <div class="post-edit-footer-actions">
+                  ${isEditMode ? `<button class="btn btn-danger post-edit-btn" onclick="deleteCurrentPost()">🗑️ 删除</button>` : ''}
+                  <button class="btn btn-primary post-edit-btn" onclick="publishArticle()">🚀 ${isEditMode ? '保存修改' : '发布文章'}</button>
                 </div>
               </div>
             </div>

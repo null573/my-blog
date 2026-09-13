@@ -1297,3 +1297,211 @@ html {
   background: var(--primary);
   color: white;
 }
+
+/* ===== 写文章页面样式 ===== */
+.post-edit-content {
+  padding: 20px 16px;
+}
+
+.post-edit-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.post-edit-header h1 {
+  font-size: 1.3rem;
+}
+
+.post-edit-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.post-edit-btn {
+  min-height: 40px;
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+.post-edit-card {
+  padding: 16px;
+}
+
+.post-title-input {
+  font-size: 17px !important;
+  padding: 14px !important;
+}
+
+.post-edit-form-row {
+  gap: 12px;
+}
+
+.post-content-textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.post-content-simple {
+  width: 100%;
+  min-height: 400px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 15px;
+  line-height: 1.8;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.preview-placeholder {
+  color: var(--text-light);
+}
+
+.post-edit-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.post-edit-footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* 桌面端调整 */
+@media (min-width: 769px) {
+  .post-edit-content {
+    padding: 30px;
+  }
+
+  .post-edit-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .post-edit-actions {
+    width: auto;
+  }
+
+  .post-edit-btn {
+    flex: none;
+    min-height: 38px;
+  }
+
+  .post-edit-card {
+    padding: 24px;
+  }
+
+  .post-title-input {
+    font-size: 18px !important;
+  }
+
+  .post-content-textarea,
+  .post-content-simple {
+    min-height: 500px;
+  }
+}
+
+/* 平板端 */
+@media (max-width: 768px) {
+  .editor-container {
+    grid-template-columns: 1fr;
+  }
+
+  .post-edit-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .post-edit-footer .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .post-edit-footer-actions {
+    width: 100%;
+  }
+
+  .post-edit-footer-actions .btn {
+    flex: 1;
+  }
+}
+
+/* 手机端 */
+@media (max-width: 480px) {
+  .post-edit-content {
+    padding: 16px 12px;
+  }
+
+  .post-edit-header h1 {
+    font-size: 1.15rem;
+  }
+
+  .post-edit-card {
+    padding: 14px;
+  }
+
+  .post-edit-actions {
+    gap: 6px;
+  }
+
+  .post-edit-btn {
+    padding: 8px 8px;
+    font-size: 13px;
+  }
+
+  .post-edit-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .post-title-input {
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  .post-content-textarea,
+  .post-content-simple {
+    min-height: 320px;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* 防止 iOS 缩放：输入框字号 >=16px */
+  .post-content-simple {
+    font-size: 16px;
+  }
+
+  .post-edit-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+}
