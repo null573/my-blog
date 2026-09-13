@@ -92,15 +92,41 @@
 
           <!-- 固定底部操作栏 -->
           <div class="post-edit-bottombar">
-            <a href="/admin/posts.html" class="btn btn-secondary post-edit-bottombar-btn">← 返回</a>
-            ${isEditMode ? `<button class="btn btn-danger post-edit-bottombar-btn" onclick="deleteCurrentPost()">🗑️</button>` : ''}
-            <button class="btn btn-primary post-edit-bottombar-btn post-edit-publish-btn" onclick="publishArticle()">🚀 ${isEditMode ? '保存' : '发布'}</button>
+            <a href="/admin/posts.html" class="btn btn-secondary post-edit-bottombar-btn">
+              <span class="post-edit-btn-text">← 返回</span>
+            </a>
+            ${isEditMode ? `<button class="btn btn-danger post-edit-bottombar-btn" onclick="deleteCurrentPost()"><span class="post-edit-btn-text">删除</span></button>` : ''}
+            <button class="btn btn-primary post-edit-bottombar-btn post-edit-publish-btn" onclick="publishArticle()">
+              <span class="post-edit-btn-text">${isEditMode ? '保存' : '发布文章'}</span>
+            </button>
           </div>
         </div>
       `;
 
       // 绑定内容变化事件
       document.getElementById('post-content-simple').addEventListener('input', updatePreview);
+
+      // 移动端动态调整编辑器高度
+      if (window.innerWidth <= 480) {
+        // 等待布局完成后再计算
+        setTimeout(adjustEditorHeight, 100);
+        setTimeout(adjustEditorHeight, 500);
+        window.addEventListener('resize', adjustEditorHeight);
+        window.addEventListener('orientationchange', function() {
+          setTimeout(adjustEditorHeight, 200);
+        });
+      }
+    }
+
+    function adjustEditorHeight() {
+      var textarea = document.getElementById('post-content-simple');
+      if (!textarea) return;
+      var viewportH = window.innerHeight;
+      var rect = textarea.getBoundingClientRect();
+      var topOffset = rect.top;
+      var bottomBarH = 60 + (window.innerHeight - window.innerHeight * 0.92); // 底部栏+安全区估算
+      var height = viewportH - topOffset - bottomBarH - 16;
+      textarea.style.height = Math.max(height, 250) + 'px';
     }
 
     async function loadPost() {
