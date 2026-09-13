@@ -123,9 +123,9 @@
                   <td>${utils.relativeTime(comment.created_at)}</td>
                   <td>
                     <div class="table-actions">
-                      ${comment.status !== 'approved' ? `<button class="btn btn-sm btn-primary" onclick="approveComment(${comment.id})">通过</button>` : ''}
-                      ${comment.status !== 'spam' ? `<button class="btn btn-sm btn-secondary" onclick="markSpam(${comment.id})">标记垃圾</button>` : ''}
-                      <button class="btn btn-sm btn-danger" onclick="deleteComment(${comment.id})">删除</button>
+                      ${comment.status !== 'approved' ? `<button class="btn btn-sm btn-primary" onclick="approveComment('${comment.id}')">通过</button>` : ''}
+                      ${comment.status !== 'spam' ? `<button class="btn btn-sm btn-secondary" onclick="markSpam('${comment.id}')">标记垃圾</button>` : ''}
+                      <button class="btn btn-sm btn-danger" onclick="deleteComment('${comment.id}')">删除</button>
                     </div>
                   </td>
                 </tr>
