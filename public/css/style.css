@@ -1397,7 +1397,7 @@ html {
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   background: white;
   border-top: 1px solid var(--border);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -2px 8px rgba(0,0,0,0.06);
   z-index: 100;
 }
 
@@ -1408,10 +1408,17 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .post-edit-publish-btn {
-  flex: 1;
+  flex: 1 1 auto;
+  color: white !important;
+  white-space: nowrap;
+  overflow: visible;
+  min-width: 0;
 }
 
 /* 顶部标题+按钮 */
@@ -1490,7 +1497,7 @@ html {
 
 .post-content-simple {
   width: 100%;
-  min-height: 35vh;
+  min-height: 55vh;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1574,7 +1581,7 @@ html {
 @media (max-width: 480px) {
   .post-edit-content {
     padding: 12px 10px;
-    padding-bottom: 80px;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   }
 
   .post-edit-header h1 {
@@ -1601,7 +1608,7 @@ html {
 
   .post-content-textarea,
   .post-content-simple {
-    min-height: 30vh;
+    min-height: 50vh;
     padding: 10px;
     font-size: 16px;
   }
@@ -1610,12 +1617,15 @@ html {
     padding: 10px 12px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 6px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -2px 8px rgba(0,0,0,0.06);
   }
 
   .post-edit-bottombar-btn {
     min-height: 44px;
     font-size: 14px;
     padding: 8px 8px;
+    white-space: nowrap;
+    overflow: visible;
   }
 
   .form-group label {
