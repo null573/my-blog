@@ -780,10 +780,43 @@ footer {
   background: #1e293b;
   color: white;
   padding: 20px 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar-brand {
+  padding: 0 24px 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.admin-sidebar-logo {
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.admin-sidebar-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
 .admin-sidebar-menu {
   list-style: none;
+  flex: 1;
 }
 
 .admin-sidebar-menu li a {
@@ -793,6 +826,8 @@ footer {
   padding: 12px 24px;
   color: #94a3b8;
   transition: all 0.2s;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .admin-sidebar-menu li a:hover,
@@ -803,6 +838,23 @@ footer {
 
 .admin-sidebar-menu li a.active {
   border-left: 3px solid var(--primary);
+}
+
+.admin-sidebar-mobile-only {
+  display: none;
+}
+
+.admin-sidebar-footer {
+  padding: 0 24px;
+  margin-top: auto;
+}
+
+.admin-sidebar-footer-link {
+  color: #94a3b8;
+  font-size: 14px;
+  display: block;
+  padding: 8px 0;
+  text-decoration: none;
 }
 
 .admin-content {
@@ -1210,23 +1262,48 @@ input:checked + .slider:before {
   }
 
   .admin-sidebar {
-    padding: 10px 0;
+    padding: 8px 0;
+    flex-direction: column;
+  }
+
+  .admin-sidebar-brand {
+    display: none;
+  }
+
+  .admin-sidebar-footer {
+    display: none;
+  }
+
+  .admin-sidebar-mobile-only {
+    display: block;
   }
 
   .admin-sidebar-menu {
     display: flex;
     overflow-x: auto;
     padding: 0 10px;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+  }
+
+  .admin-sidebar-menu li {
+    flex-shrink: 0;
   }
 
   .admin-sidebar-menu li a {
-    padding: 10px 16px;
+    padding: 10px 14px;
     white-space: nowrap;
+    font-size: 13px;
   }
 
   .admin-sidebar-menu li a.active {
     border-left: none;
     border-bottom: 3px solid var(--primary);
+  }
+
+  .admin-content {
+    padding: 16px 12px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1300,18 +1377,19 @@ html {
 
 /* ===== 写文章页面样式 ===== */
 .post-edit-content {
-  padding: 20px 16px;
+  padding: 16px 12px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
 }
 
 .post-edit-header {
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .post-edit-header h1 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 
 .post-edit-actions {
@@ -1325,16 +1403,16 @@ html {
   flex: 1;
   text-align: center;
   font-size: 14px;
-  padding: 8px 12px;
+  padding: 8px 10px;
 }
 
 .post-edit-card {
-  padding: 16px;
+  padding: 14px;
 }
 
 .post-title-input {
-  font-size: 17px !important;
-  padding: 14px !important;
+  font-size: 16px !important;
+  padding: 12px !important;
 }
 
 .post-edit-form-row {
@@ -1343,23 +1421,23 @@ html {
 
 .post-content-textarea {
   width: 100%;
-  min-height: 400px;
-  padding: 14px;
+  min-height: 300px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: Consolas, monospace;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   resize: vertical;
 }
 
 .post-content-simple {
   width: 100%;
-  min-height: 400px;
-  padding: 14px;
+  min-height: 300px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.8;
   resize: vertical;
   font-family: inherit;
@@ -1370,19 +1448,29 @@ html {
 }
 
 .post-edit-footer {
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+}
+
+.post-edit-footer .btn {
+  width: 100%;
+  text-align: center;
+  min-height: 42px;
 }
 
 .post-edit-footer-actions {
   display: flex;
   gap: 8px;
+  width: 100%;
+}
+
+.post-edit-footer-actions .btn {
+  flex: 1;
+  min-height: 42px;
 }
 
 .switch-label {
@@ -1390,12 +1478,18 @@ html {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  font-size: 15px;
+}
+
+.switch-label > .switch {
+  flex-shrink: 0;
 }
 
 /* 桌面端调整 */
 @media (min-width: 769px) {
   .post-edit-content {
     padding: 30px;
+    padding-bottom: 30px;
   }
 
   .post-edit-header {
@@ -1418,11 +1512,27 @@ html {
 
   .post-title-input {
     font-size: 18px !important;
+    padding: 14px !important;
   }
 
   .post-content-textarea,
   .post-content-simple {
     min-height: 500px;
+  }
+
+  .post-edit-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .post-edit-footer .btn {
+    width: auto;
+    min-height: 38px;
+  }
+
+  .post-edit-footer-actions {
+    width: auto;
   }
 }
 
@@ -1431,38 +1541,21 @@ html {
   .editor-container {
     grid-template-columns: 1fr;
   }
-
-  .post-edit-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .post-edit-footer .btn {
-    width: 100%;
-    text-align: center;
-  }
-
-  .post-edit-footer-actions {
-    width: 100%;
-  }
-
-  .post-edit-footer-actions .btn {
-    flex: 1;
-  }
 }
 
 /* 手机端 */
 @media (max-width: 480px) {
   .post-edit-content {
-    padding: 16px 12px;
+    padding: 14px 10px;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   }
 
   .post-edit-header h1 {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
 
   .post-edit-card {
-    padding: 14px;
+    padding: 12px;
   }
 
   .post-edit-actions {
@@ -1470,7 +1563,7 @@ html {
   }
 
   .post-edit-btn {
-    padding: 8px 8px;
+    padding: 8px 6px;
     font-size: 13px;
   }
 
@@ -1479,26 +1572,11 @@ html {
     gap: 12px;
   }
 
-  .post-title-input {
-    font-size: 16px !important;
-    padding: 12px !important;
-  }
-
   .post-content-textarea,
   .post-content-simple {
-    min-height: 320px;
-    padding: 12px;
-    font-size: 14px;
-  }
-
-  /* 防止 iOS 缩放：输入框字号 >=16px */
-  .post-content-simple {
+    min-height: 280px;
+    padding: 10px;
     font-size: 16px;
-  }
-
-  .post-edit-footer {
-    margin-top: 16px;
-    padding-top: 12px;
   }
 
   .form-group label {
