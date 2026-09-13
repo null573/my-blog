@@ -1404,21 +1404,42 @@ html {
 .post-edit-bottombar-btn {
   min-height: 44px;
   font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
   padding: 8px 12px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   white-space: nowrap;
   overflow: visible;
   flex-shrink: 0;
+  text-indent: 0;
+  opacity: 1;
+  visibility: visible;
+}
+
+.post-edit-bottombar-btn.btn-primary {
+  color: #ffffff !important;
+  background: var(--primary) !important;
+}
+
+.post-edit-bottombar-btn.btn-secondary {
+  color: var(--text) !important;
+  background: var(--bg) !important;
+}
+
+.post-edit-bottombar-btn.btn-danger {
+  color: #ffffff !important;
+  background: var(--danger) !important;
 }
 
 .post-edit-publish-btn {
   flex: 1 1 auto;
-  color: white !important;
-  white-space: nowrap;
-  overflow: visible;
   min-width: 0;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
 }
 
 /* 顶部标题+按钮 */
@@ -1579,9 +1600,22 @@ html {
 
 /* 手机端 */
 @media (max-width: 480px) {
+  .post-edit-layout.admin-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
   .post-edit-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     padding: 12px 10px;
-    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .post-edit-header {
+    flex-shrink: 0;
   }
 
   .post-edit-header h1 {
@@ -1589,7 +1623,27 @@ html {
   }
 
   .post-edit-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     padding: 12px;
+    min-height: 0;
+  }
+
+  .post-edit-card .form-group {
+    flex-shrink: 0;
+  }
+
+  .post-edit-editor-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+
+  .post-edit-editor-group label {
+    flex-shrink: 0;
   }
 
   .post-edit-actions {
@@ -1608,7 +1662,9 @@ html {
 
   .post-content-textarea,
   .post-content-simple {
-    min-height: 50vh;
+    flex: 1;
+    min-height: 200px;
+    height: 0;
     padding: 10px;
     font-size: 16px;
   }
