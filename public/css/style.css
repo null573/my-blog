@@ -25,6 +25,19 @@
   --max-width: 1200px;
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body.post-edit-page {
+  overflow-x: hidden;
+}
+
+body.post-edit-page #app {
+  height: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans CJK SC', 'WenQuanYi Micro Hei', sans-serif;
   background: var(--bg);
@@ -1258,12 +1271,23 @@ input:checked + .slider:before {
   }
 
   .admin-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .admin-sidebar,
+  .admin-content {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .admin-sidebar {
     padding: 8px 0;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .admin-sidebar-brand {
@@ -1280,10 +1304,13 @@ input:checked + .slider:before {
 
   .admin-sidebar-menu {
     display: flex;
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     padding: 0 10px;
     -webkit-overflow-scrolling: touch;
     gap: 0;
+    overscroll-behavior-x: contain;
   }
 
   .admin-sidebar-menu li {
@@ -1378,11 +1405,15 @@ html {
 /* ===== 写文章页面样式 ===== */
 .post-edit-layout {
   position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 
 .post-edit-content {
   padding: 16px 12px;
   padding-bottom: 80px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* 固定底部操作栏 */
@@ -1391,6 +1422,8 @@ html {
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   gap: 8px;
   padding: 12px 16px;
@@ -1399,6 +1432,7 @@ html {
   border-top: 1px solid var(--border);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -2px 8px rgba(0,0,0,0.06);
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .post-edit-bottombar-btn {
@@ -1412,12 +1446,14 @@ html {
   justify-content: center;
   gap: 6px;
   white-space: nowrap;
-  overflow: visible;
-  flex-shrink: 0;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
   -webkit-appearance: none;
   appearance: none;
   border: none;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .post-edit-btn-text {
@@ -1471,7 +1507,7 @@ html {
 }
 
 .post-edit-publish-btn {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   font-size: 16px !important;
   font-weight: 600 !important;
@@ -1553,7 +1589,7 @@ html {
 
 .post-content-simple {
   width: 100%;
-  min-height: 55vh;
+  min-height: 280px;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1631,21 +1667,129 @@ html {
   .editor-container {
     grid-template-columns: 1fr;
   }
+
+  html:has(body.post-edit-page),
+  html:has(.post-edit-layout),
+  body.post-edit-page,
+  body.post-edit-page #app {
+    height: 100%;
+    height: 100svh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .post-edit-layout.admin-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .post-edit-layout > .admin-sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .post-edit-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 10px 8px;
+  }
+
+  .post-edit-header {
+    flex-shrink: 0;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .post-edit-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0;
+    padding: 12px;
+  }
+
+  .post-edit-card .form-group {
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+
+  .post-edit-editor-group {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+
+  .post-edit-editor-group textarea,
+  .post-content-textarea,
+  .post-content-simple {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 140px;
+    height: auto;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+    resize: none;
+  }
+
+  .post-edit-editor-group .editor-container {
+    flex: 1 1 auto;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .post-edit-bottombar {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 10px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    gap: 8px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  }
+
+  .post-edit-bottombar-btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+    max-width: 100%;
+    font-size: 14px;
+    padding: 8px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .post-edit-publish-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 15px !important;
+  }
 }
 
 /* 手机端 */
 @media (max-width: 480px) {
-  .post-edit-content {
-    padding: 12px 10px;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  }
-
   .post-edit-header h1 {
     font-size: 1.1rem;
-  }
-
-  .post-edit-card {
-    padding: 12px;
   }
 
   .post-edit-actions {
@@ -1659,36 +1803,7 @@ html {
 
   .post-edit-form-row {
     grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .post-content-textarea,
-  .post-content-simple {
-    min-height: 250px;
-    padding: 10px;
-    font-size: 16px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .post-edit-bottombar {
-    padding: 10px 12px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    gap: 8px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -2px 8px rgba(0,0,0,0.06);
-  }
-
-  .post-edit-bottombar-btn {
-    min-height: 44px;
-    font-size: 14px;
-    padding: 8px 14px;
-    white-space: nowrap;
-    overflow: visible;
-  }
-
-  .post-edit-publish-btn {
-    flex: 1;
-    font-size: 15px !important;
+    gap: 10px;
   }
 
   .form-group label {

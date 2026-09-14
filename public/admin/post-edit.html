@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
-<body>
+<body class="post-edit-page">
   <div id="app"></div>
 
   <script src="/js/app.js"></script>
@@ -103,30 +103,7 @@
         </div>
       `;
 
-      // 绑定内容变化事件
       document.getElementById('post-content-simple').addEventListener('input', updatePreview);
-
-      // 移动端动态调整编辑器高度
-      if (window.innerWidth <= 480) {
-        // 等待布局完成后再计算
-        setTimeout(adjustEditorHeight, 100);
-        setTimeout(adjustEditorHeight, 500);
-        window.addEventListener('resize', adjustEditorHeight);
-        window.addEventListener('orientationchange', function() {
-          setTimeout(adjustEditorHeight, 200);
-        });
-      }
-    }
-
-    function adjustEditorHeight() {
-      var textarea = document.getElementById('post-content-simple');
-      if (!textarea) return;
-      var viewportH = window.innerHeight;
-      var rect = textarea.getBoundingClientRect();
-      var topOffset = rect.top;
-      var bottomBarH = 60 + (window.innerHeight - window.innerHeight * 0.92); // 底部栏+安全区估算
-      var height = viewportH - topOffset - bottomBarH - 16;
-      textarea.style.height = Math.max(height, 250) + 'px';
     }
 
     async function loadPost() {
