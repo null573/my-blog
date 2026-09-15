@@ -63,42 +63,42 @@
       -webkit-overflow-scrolling: touch;
     }
     .links-table-container .data-table {
-      table-layout: fixed;
-      min-width: 720px;
+      width: 100%;
+      min-width: 640px;
     }
     .links-table-container .data-table th,
     .links-table-container .data-table td {
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      vertical-align: middle;
     }
-    .links-table-container .col-id {
-      width: 140px;
+    /* 名称、ID、排序、状态、操作不换行，列宽随内容自适应 */
+    .links-table-container .cell-nowrap {
+      white-space: nowrap;
+    }
+    .links-table-container .cell-id {
+      font-size: 12px;
+      color: var(--text-light);
+      max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 12px;
-      color: var(--text-light);
     }
-    .links-table-container .col-url {
-      width: 34%;
+    .links-table-container .cell-name {
+      font-weight: 500;
+    }
+    /* 长链接仅在需要时换行，避免把表格撑宽 */
+    .links-table-container .cell-url {
+      min-width: 180px;
+      max-width: 420px;
       font-size: 13px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .links-table-container .col-desc {
-      width: 18%;
+    .links-table-container .cell-desc {
+      max-width: 220px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .links-table-container .col-sort {
-      width: 64px;
-      white-space: nowrap;
-    }
-    .links-table-container .col-status {
-      width: 76px;
-      white-space: nowrap;
-    }
-    .links-table-container .col-actions {
-      width: 132px;
-      white-space: nowrap;
-    }
-    .links-table-container .col-actions .table-actions {
+    .links-table-container .table-actions {
       flex-wrap: nowrap;
     }
     @media (max-width: 768px) {
@@ -240,29 +240,29 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th class="col-id">ID</th>
+                <th>ID</th>
                 <th>名称</th>
-                <th class="col-url">链接</th>
-                <th class="col-desc">描述</th>
-                <th class="col-sort">排序</th>
-                <th class="col-status">状态</th>
-                <th class="col-actions">操作</th>
+                <th>链接</th>
+                <th>描述</th>
+                <th>排序</th>
+                <th>状态</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
               ${links.map(link => `
                 <tr>
-                  <td class="col-id" title="${utils.escapeHtml(link.id)}">${utils.escapeHtml(link.id)}</td>
-                  <td style="font-weight:500;">${utils.escapeHtml(link.name)}</td>
-                  <td class="col-url"><a href="${utils.escapeHtml(link.url)}" target="_blank">${utils.escapeHtml(link.url)}</a></td>
-                  <td class="col-desc">${utils.escapeHtml(link.description || '-')}</td>
-                  <td class="col-sort">${link.sort_order}</td>
-                  <td class="col-status">
+                  <td class="cell-id" title="${utils.escapeHtml(link.id)}">${utils.escapeHtml(link.id)}</td>
+                  <td class="cell-name cell-nowrap">${utils.escapeHtml(link.name)}</td>
+                  <td class="cell-url"><a href="${utils.escapeHtml(link.url)}" target="_blank">${utils.escapeHtml(link.url)}</a></td>
+                  <td class="cell-desc">${utils.escapeHtml(link.description || '-')}</td>
+                  <td class="cell-nowrap">${link.sort_order}</td>
+                  <td class="cell-nowrap">
                     <span class="tag" style="background:${link.is_visible ? '#dcfce7;color:#166534' : '#f1f5f9;color:#64748b'};">
                       ${link.is_visible ? '显示' : '隐藏'}
                     </span>
                   </td>
-                  <td class="col-actions">
+                  <td class="cell-nowrap">
                     <div class="table-actions">
                       <button class="btn btn-sm btn-secondary" onclick="editLinkById('${link.id}')">编辑</button>
                       <button class="btn btn-sm btn-danger" onclick="deleteLink('${link.id}')">删除</button>
