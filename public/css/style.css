@@ -429,6 +429,38 @@ header {
   transform: translateX(4px);
 }
 
+/* 友情链接列表：两列展示 */
+#links-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#links-list li {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+#links-list a {
+  padding: 6px 8px;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+#links-list a:hover {
+  transform: none;
+  border-color: var(--primary);
+  background: var(--bg-card);
+}
+
+#links-list a > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .link-icon {
   width: 24px;
   height: 24px;
