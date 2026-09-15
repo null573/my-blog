@@ -1606,15 +1606,14 @@ html {
 /* 桌面端调整 */
 @media (min-width: 769px) {
   .post-edit-content {
-    padding: 30px;
-    padding-bottom: 30px;
+    padding: 30px 30px 0;
   }
 
   /* 桌面端隐藏固定底部栏，用内联 footer */
   .post-edit-bottombar {
     position: static;
-    padding: 16px 0 0;
-    padding-bottom: 0;
+    padding: 16px 30px 30px;
+    padding-bottom: 30px;
     background: transparent;
     border-top: 1px solid var(--border);
     box-shadow: none;
@@ -1808,5 +1807,20 @@ html {
 
   .form-group label {
     font-size: 14px;
+  }
+}
+
+/* 桌面端双列布局：底部操作栏对齐内容列，避免落入侧边栏下方的窄列 */
+@media (min-width: 901px) {
+  .post-edit-layout {
+    grid-template-rows: 1fr auto;
+  }
+
+  .post-edit-layout > .admin-sidebar {
+    grid-row: 1 / -1;
+  }
+
+  .post-edit-layout > .post-edit-bottombar {
+    grid-column: 2;
   }
 }
