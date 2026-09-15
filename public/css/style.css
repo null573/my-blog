@@ -873,6 +873,7 @@ footer {
 .admin-content {
   padding: 30px;
   background: var(--bg);
+  min-width: 0;
 }
 
 .admin-header {

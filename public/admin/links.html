@@ -57,6 +57,50 @@
       font-size: 12px;
       color: var(--text-light);
     }
+    /* 桌面端表格：长链接换行，操作列始终可见 */
+    .links-table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .links-table-container .data-table {
+      table-layout: fixed;
+      min-width: 720px;
+    }
+    .links-table-container .data-table th,
+    .links-table-container .data-table td {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .links-table-container .col-id {
+      width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    .links-table-container .col-url {
+      width: 34%;
+      font-size: 13px;
+    }
+    .links-table-container .col-desc {
+      width: 18%;
+    }
+    .links-table-container .col-sort {
+      width: 64px;
+      white-space: nowrap;
+    }
+    .links-table-container .col-status {
+      width: 76px;
+      white-space: nowrap;
+    }
+    .links-table-container .col-actions {
+      width: 132px;
+      white-space: nowrap;
+    }
+    .links-table-container .col-actions .table-actions {
+      flex-wrap: nowrap;
+    }
     @media (max-width: 768px) {
       .links-table-container {
         display: none;
@@ -196,29 +240,29 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th class="col-id">ID</th>
                 <th>名称</th>
-                <th>链接</th>
-                <th>描述</th>
-                <th>排序</th>
-                <th>状态</th>
-                <th>操作</th>
+                <th class="col-url">链接</th>
+                <th class="col-desc">描述</th>
+                <th class="col-sort">排序</th>
+                <th class="col-status">状态</th>
+                <th class="col-actions">操作</th>
               </tr>
             </thead>
             <tbody>
               ${links.map(link => `
                 <tr>
-                  <td>${link.id}</td>
+                  <td class="col-id" title="${utils.escapeHtml(link.id)}">${utils.escapeHtml(link.id)}</td>
                   <td style="font-weight:500;">${utils.escapeHtml(link.name)}</td>
-                  <td><a href="${utils.escapeHtml(link.url)}" target="_blank" style="font-size:13px;">${utils.escapeHtml(link.url)}</a></td>
-                  <td>${utils.escapeHtml(link.description || '-')}</td>
-                  <td>${link.sort_order}</td>
-                  <td>
+                  <td class="col-url"><a href="${utils.escapeHtml(link.url)}" target="_blank">${utils.escapeHtml(link.url)}</a></td>
+                  <td class="col-desc">${utils.escapeHtml(link.description || '-')}</td>
+                  <td class="col-sort">${link.sort_order}</td>
+                  <td class="col-status">
                     <span class="tag" style="background:${link.is_visible ? '#dcfce7;color:#166534' : '#f1f5f9;color:#64748b'};">
                       ${link.is_visible ? '显示' : '隐藏'}
                     </span>
                   </td>
-                  <td>
+                  <td class="col-actions">
                     <div class="table-actions">
                       <button class="btn btn-sm btn-secondary" onclick="editLinkById('${link.id}')">编辑</button>
                       <button class="btn btn-sm btn-danger" onclick="deleteLink('${link.id}')">删除</button>
