@@ -429,11 +429,12 @@ header {
   transform: translateX(4px);
 }
 
-/* 友情链接列表：两列展示 */
+/* 友情链接列表：两列展示（移动端窄屏同样保持两列） */
 #links-list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
 }
 
 #links-list li {
