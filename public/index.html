@@ -106,12 +106,36 @@
     // 页面初始化
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('current-year').textContent = new Date().getFullYear();
-      
-      // 加载设置
+
+      // 检查登录状态
+      if (api.isLoggedIn()) {
+        document.getElementById('admin-link').style.display = 'block';
+      }
+
+      const isSsr = !!(window.__SSR_PAGE__ && window.__SSR_PAGE__.page === 'home');
+
+      await loadSettings(isSsr);
+
+      // 服务端已渲染列表内容，跳过重复请求
+      if (isSsr) return;
+
+      // 加载文章
+      const page = parseInt(utils.getQueryParam('page') || '1') || 1;
+      loadPosts(page);
+
+      // 加载友情链接
+      loadLinks();
+
+      // 加载热门文章
+      loadPopularPosts();
+    });
+
+    // 加载网站设置
+    async function loadSettings(isSsr) {
       try {
         const { settings } = await api.settings.get();
         if (settings.site_title) {
-          document.title = settings.site_title;
+          if (!isSsr) document.title = settings.site_title;
           document.getElementById('site-title').textContent = settings.site_title;
         }
         if (settings.site_description) {
@@ -130,22 +154,7 @@
       } catch (e) {
         console.error('加载设置失败', e);
       }
-
-      // 检查登录状态
-      if (api.isLoggedIn()) {
-        document.getElementById('admin-link').style.display = 'block';
-      }
-
-      // 加载文章
-      const page = parseInt(utils.getQueryParam('page') || '1');
-      loadPosts(page);
-      
-      // 加载友情链接
-      loadLinks();
-      
-      // 加载热门文章
-      loadPopularPosts();
-    });
+    }
 
     // 加载文章列表
     async function loadPosts(page = 1) {
@@ -163,14 +172,14 @@
 
         container.innerHTML = data.posts.map(post => `
           <article class="card post-card">
-            <h2><a href="/post.html?slug=${post.slug}">${utils.escapeHtml(post.title)}</a></h2>
+            <h2><a href="/post/${encodeURIComponent(post.slug)}">${utils.escapeHtml(post.title)}</a></h2>
             <div class="post-meta">
               <span>📅 ${utils.formatDate(post.created_at)}</span>
               <span>👁️ ${post.views} 阅读</span>
               ${post.status === 'draft' ? '<span style="color:var(--warning);">📝 草稿</span>' : ''}
             </div>
             <p class="post-summary">${utils.escapeHtml(post.summary || '')}</p>
-            <a href="/post.html?slug=${post.slug}" class="btn btn-primary btn-sm">阅读全文 →</a>
+            <a href="/post/${encodeURIComponent(post.slug)}" class="btn btn-primary btn-sm">阅读全文 →</a>
           </article>
         `).join('');
 
@@ -258,7 +267,7 @@
 
         list.innerHTML = posts.map(post => `
           <li>
-            <a href="/post.html?slug=${post.slug}">
+            <a href="/post/${encodeURIComponent(post.slug)}">
               <span class="link-icon">🔥</span>
               <span style="font-size:13px;">${utils.escapeHtml(post.title)}</span>
             </a>

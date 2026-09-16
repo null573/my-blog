@@ -32,7 +32,7 @@ export async function onRequestGet(context) {
       const lastmod = post.updated_at ? new Date(post.updated_at).toISOString().split('T')[0] : '';
       xml += `
   <url>
-    <loc>${baseUrl}/post.html?slug=${post.slug}</loc>
+    <loc>${baseUrl}/post/${encodeURIComponent(post.slug)}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

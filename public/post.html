@@ -62,6 +62,14 @@
           </div>
         </div>
 
+        <!-- 最新文章 -->
+        <div class="widget">
+          <h3 class="widget-title">最新文章</h3>
+          <ul class="links-list" id="latest-posts">
+            <li style="color:var(--text-light);font-size:14px;">加载中...</li>
+          </ul>
+        </div>
+
         <!-- 友情链接 -->
         <div class="widget">
           <h3 class="widget-title">友情链接</h3>
@@ -105,18 +113,23 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('current-year').textContent = new Date().getFullYear();
-      
-      currentSlug = utils.getQueryParam('slug');
+
+      // 优先从路径 /post/:slug 解析，兼容旧的 ?slug= 形式
+      const pathMatch = window.location.pathname.match(/^\/post\/(.+?)\/?$/);
+      currentSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : utils.getQueryParam('slug');
       if (!currentSlug) {
         window.location.href = '/';
         return;
       }
 
+      const ssr = window.__SSR_PAGE__;
+      const isSsr = !!(ssr && ssr.page === 'post' && ssr.slug === currentSlug);
+
       // 加载设置
       try {
         const { settings } = await api.settings.get();
         if (settings.site_title) {
-          document.getElementById('site-title').textContent = settings.site_title;
+          if (!isSsr) document.getElementById('site-title').textContent = settings.site_title;
         }
         if (settings.site_description) {
           document.getElementById('footer-desc').textContent = settings.site_description;
@@ -137,11 +150,16 @@
         document.getElementById('admin-link').style.display = 'block';
       }
 
-      // 加载文章
-      loadPost();
-      
-      // 加载友情链接
-      loadLinks();
+      // 服务端已渲染正文与侧边栏，跳过重复请求
+      if (!isSsr) {
+        loadPost();
+        loadLinks();
+      }
+
+      // 评论由客户端加载；文章不存在的兜底页不加载
+      if (!(ssr && ssr.fallback)) {
+        loadComments();
+      }
     });
 
     // 加载文章
@@ -181,9 +199,6 @@
             </div>
           </article>
         `;
-
-        // 加载评论
-        loadComments();
       } catch (e) {
         if (e.message === '文章不存在') {
           container.innerHTML = `

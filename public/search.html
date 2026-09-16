@@ -188,13 +188,13 @@
           
           html += `
             <article class="card post-card">
-              <h2><a href="/post.html?slug=${post.slug}">${highlightedTitle}</a></h2>
+              <h2><a href="/post/${encodeURIComponent(post.slug)}">${highlightedTitle}</a></h2>
               <div class="post-meta">
                 <span>📅 ${utils.formatDate(post.created_at)}</span>
                 <span>👁️ ${post.views} 阅读</span>
               </div>
               <p class="post-summary">${highlightedSummary}</p>
-              <a href="/post.html?slug=${post.slug}" class="btn btn-primary btn-sm">阅读全文 →</a>
+              <a href="/post/${encodeURIComponent(post.slug)}" class="btn btn-primary btn-sm">阅读全文 →</a>
             </article>
           `;
         });

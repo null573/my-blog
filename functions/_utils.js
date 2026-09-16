@@ -306,6 +306,210 @@ export async function updateAdminPassword(env, adminId, newPasswordHash) {
   return false;
 }
 
+// ===== 服务端渲染（SEO）工具 =====
+
+// HTML转义
+export function escapeHtml(text) {
+  if (text === null || text === undefined) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// 格式化日期（服务端）
+export function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  try {
+    return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch (e) {
+    return date.toISOString().split('T')[0];
+  }
+}
+
+// 简单的Markdown解析（与前端 utils.parseMarkdown 保持一致）
+export function parseMarkdown(text) {
+  if (!text) return '';
+
+  let html = text;
+
+  // 代码块
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+  });
+
+  // 行内代码
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // 标题
+  html = html.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
+  html = html.replace(/^##### (.*$)/gm, '<h5>$1</h5>');
+  html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+  html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+
+  // 粗体和斜体
+  html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // 链接
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // 图片
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+
+  // 引用
+  html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+
+  // 无序列表
+  html = html.replace(/^[-*] (.*$)/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+  html = html.replace(/<\/ul>\n<ul>/g, '');
+
+  // 有序列表
+  html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+
+  // 水平线
+  html = html.replace(/^---$/gm, '<hr>');
+
+  // 段落
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+  html = html.replace(/<p><(h\d|ul|ol|blockquote|pre|hr)/g, '<$1');
+  html = html.replace(/<\/(h\d|ul|ol|blockquote|pre)><\/p>/g, '</$1>');
+  html = html.replace(/<p><\/p>/g, '');
+
+  // 换行
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
+// 去掉Markdown标记，生成纯文本摘要
+export function markdownToPlainText(content = '') {
+  return String(content)
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/[*_>~-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// 注入 head 标签（title / description / keywords / canonical / og）
+export function injectHead(html, options = {}) {
+  const { title, description, keywords, canonical, ogType, ogImage, publishedTime } = options;
+  let out = html;
+
+  if (title) {
+    if (/<title>[\s\S]*?<\/title>/.test(out)) {
+      out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
+    } else {
+      out = out.replace('</head>', `  <title>${escapeHtml(title)}</title>\n</head>`);
+    }
+  }
+
+  if (description) {
+    const tag = `<meta name="description" content="${escapeHtml(description)}">`;
+    if (/<meta name="description"[^>]*>/.test(out)) {
+      out = out.replace(/<meta name="description"[^>]*>/, tag);
+    } else {
+      out = out.replace('</head>', `  ${tag}\n</head>`);
+    }
+  }
+
+  if (keywords) {
+    const tag = `<meta name="keywords" content="${escapeHtml(keywords)}">`;
+    if (/<meta name="keywords"[^>]*>/.test(out)) {
+      out = out.replace(/<meta name="keywords"[^>]*>/, tag);
+    } else {
+      out = out.replace('</head>', `  ${tag}\n</head>`);
+    }
+  }
+
+  const extra = [];
+  if (canonical) {
+    extra.push(`<link rel="canonical" href="${escapeHtml(canonical)}">`);
+    extra.push(`<meta property="og:url" content="${escapeHtml(canonical)}">`);
+  }
+  if (title) {
+    extra.push(`<meta property="og:title" content="${escapeHtml(title)}">`);
+    extra.push(`<meta name="twitter:title" content="${escapeHtml(title)}">`);
+  }
+  if (description) {
+    extra.push(`<meta property="og:description" content="${escapeHtml(description)}">`);
+    extra.push(`<meta name="twitter:description" content="${escapeHtml(description)}">`);
+  }
+  if (ogType) extra.push(`<meta property="og:type" content="${escapeHtml(ogType)}">`);
+  extra.push('<meta name="twitter:card" content="summary">');
+  if (ogImage) {
+    extra.push(`<meta property="og:image" content="${escapeHtml(ogImage)}">`);
+  }
+  if (publishedTime) {
+    extra.push(`<meta property="article:published_time" content="${escapeHtml(publishedTime)}">`);
+  }
+
+  if (extra.length) {
+    out = out.replace('</head>', `  ${extra.join('\n  ')}\n</head>`);
+  }
+
+  return out;
+}
+
+// 注入站点设置（标题、页脚描述、联系方式）
+export function injectSiteSettings(html, settings = {}) {
+  let out = html;
+
+  if (settings.site_title) {
+    out = out.replace(
+      /(<span id="site-title">)[\s\S]*?(<\/span>)/,
+      `$1${escapeHtml(settings.site_title)}$2`
+    );
+  }
+  if (settings.site_description) {
+    out = out.replace(
+      /(<p id="footer-desc">)[\s\S]*?(<\/p>)/,
+      `$1${escapeHtml(settings.site_description)}$2`
+    );
+  }
+  if (settings.contact_info) {
+    const contact = escapeHtml(settings.contact_info).replace(/\n/g, '<br>');
+    out = out.replace(
+      /(<p id="footer-contact">)[\s\S]*?(<\/p>)/,
+      `$1${contact}$2`
+    );
+  }
+
+  return out;
+}
+
+// 注入 SSR 标记，前端据此跳过重复渲染
+export function injectSsrFlag(html, payload) {
+  const script = `<script>window.__SSR_PAGE__=${JSON.stringify(payload)};</script>`;
+  if (html.includes('</body>')) {
+    return html.replace('</body>', `  ${script}\n</body>`);
+  }
+  return html + script;
+}
+
+// 获取静态资源HTML模板
+export async function getAssetHtml(env, path, requestUrl) {
+  const assetUrl = new URL(path, requestUrl);
+  const res = await env.ASSETS.fetch(new Request(assetUrl.toString()));
+  if (!res.ok) {
+    throw new Error(`加载模板失败: ${path} (${res.status})`);
+  }
+  return await res.text();
+}
+
 // 搜索文章
 export async function searchPosts(env, query, page = 1, limit = 10) {
   const postsData = await env.BLOG_KV.get('posts:list', { type: 'json' });

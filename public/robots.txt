@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: /sitemap.xml
+Sitemap: https://eblog1.pages.dev/sitemap.xml

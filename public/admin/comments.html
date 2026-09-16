@@ -109,7 +109,7 @@
                     <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${utils.escapeHtml(comment.content)}</div>
                   </td>
                   <td>
-                    <a href="/post.html?slug=${comment.post_slug}" target="_blank">${utils.escapeHtml(comment.post_title)}</a>
+                    <a href="/post/${encodeURIComponent(comment.post_slug)}" target="_blank">${utils.escapeHtml(comment.post_title)}</a>
                   </td>
                   <td>
                     <span class="tag" style="background:${

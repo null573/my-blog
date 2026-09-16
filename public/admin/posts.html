@@ -85,7 +85,7 @@
                 <tr>
                   <td>${post.id}</td>
                   <td>
-                    <a href="/post.html?slug=${post.slug}" target="_blank" style="font-weight:500;">
+                    <a href="/post/${encodeURIComponent(post.slug)}" target="_blank" style="font-weight:500;">
                       ${utils.escapeHtml(post.title)}
                     </a>
                     <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${post.slug}</div>
@@ -101,7 +101,7 @@
                   <td>${utils.formatDateTime(post.updated_at)}</td>
                   <td>
                     <div class="table-actions">
-                      <a href="/post.html?slug=${post.slug}" target="_blank" class="btn btn-sm btn-secondary">查看</a>
+                      <a href="/post/${encodeURIComponent(post.slug)}" target="_blank" class="btn btn-sm btn-secondary">查看</a>
                       <a href="/admin/post-edit.html?slug=${post.slug}" class="btn btn-sm btn-primary">编辑</a>
                       <button class="btn btn-sm btn-danger" onclick="deletePost('${post.slug}')">删除</button>
                     </div>
