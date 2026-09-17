@@ -4,6 +4,7 @@ import {
   getSettings,
   escapeHtml,
   formatDate,
+  formatDateIcon,
   injectHead,
   injectSiteSettings,
   injectSsrFlag,
@@ -30,7 +31,7 @@ function renderPostsHtml(posts) {
           <article class="card post-card">
             <h2><a href="${postUrl(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <div class="post-meta">
-              <span>📅 ${escapeHtml(formatDate(post.created_at))}</span>
+              <span>${formatDateIcon(post.created_at)} ${escapeHtml(formatDate(post.created_at))}</span>
               <span>👁️ ${Number(post.views) || 0} 阅读</span>
             </div>
             ${summary ? `<p class="post-summary">${escapeHtml(summary)}</p>` : ''}

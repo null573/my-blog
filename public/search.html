@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搜索 - 我的博客</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260920">
+  <link rel="stylesheet" href="/css/style.css?v=20260921">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
@@ -101,7 +101,7 @@
     </div>
   </footer>
 
-  <script src="/js/app.js?v=20260920"></script>
+  <script src="/js/app.js?v=20260921"></script>
   <script>
     let currentQuery = '';
 
@@ -191,7 +191,7 @@
             <article class="card post-card">
               <h2><a href="/post/${encodeURIComponent(post.slug)}">${highlightedTitle}</a></h2>
               <div class="post-meta">
-                <span>📅 ${utils.formatDate(post.created_at)}</span>
+                <span>${utils.formatDateIcon(post.created_at)} ${utils.formatDate(post.created_at)}</span>
                 <span>👁️ ${post.views} 阅读</span>
               </div>
               ${utils.markdownToPlainText(post.summary || '') ? `<p class="post-summary">${highlightText(utils.markdownToPlainText(post.summary || ''), currentQuery)}</p>` : ''}

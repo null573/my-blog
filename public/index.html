@@ -6,7 +6,7 @@
   <title>我的博客 - 分享技术与生活</title>
   <meta name="description" content="分享技术、生活与思考的个人博客">
   <meta name="keywords" content="博客,技术,编程,生活">
-  <link rel="stylesheet" href="/css/style.css?v=20260920">
+  <link rel="stylesheet" href="/css/style.css?v=20260921">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
@@ -101,7 +101,7 @@
     </div>
   </footer>
 
-  <script src="/js/app.js?v=20260920"></script>
+  <script src="/js/app.js?v=20260921"></script>
   <script>
     // 页面初始化
     document.addEventListener('DOMContentLoaded', async () => {
@@ -175,7 +175,7 @@
           <article class="card post-card">
             <h2><a href="/post/${encodeURIComponent(post.slug)}">${utils.escapeHtml(post.title)}</a></h2>
             <div class="post-meta">
-              <span>📅 ${utils.formatDate(post.created_at)}</span>
+              <span>${utils.formatDateIcon(post.created_at)} ${utils.formatDate(post.created_at)}</span>
               <span>👁️ ${post.views} 阅读</span>
               ${post.status === 'draft' ? '<span style="color:var(--warning);">📝 草稿</span>' : ''}
             </div>

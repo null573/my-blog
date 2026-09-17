@@ -361,6 +361,16 @@ export function escapeHtml(text) {
     .replace(/'/g, '&#39;');
 }
 
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+export function formatDateIcon(dateStr) {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const month = MONTH_ABBR[date.getMonth()];
+  const day = String(date.getDate());
+  return `<span class="date-icon" aria-hidden="true"><span class="date-icon-month">${month}</span><span class="date-icon-day">${day}</span></span>`;
+}
+
 // 格式化日期（服务端）
 export function formatDate(dateStr) {
   const date = new Date(dateStr);

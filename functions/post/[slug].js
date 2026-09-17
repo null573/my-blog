@@ -6,6 +6,7 @@ import {
   parseMarkdown,
   escapeHtml,
   formatDate,
+  formatDateIcon,
   markdownToPlainText,
   injectHead,
   injectSiteSettings,
@@ -84,7 +85,7 @@ export async function onRequestGet(context) {
           <article class="card post-detail">
             <h1>${escapeHtml(post.title)}</h1>
             <div class="post-meta">
-              <span>📅 ${escapeHtml(formatDate(post.created_at))}</span>
+              <span>${formatDateIcon(post.created_at)} ${escapeHtml(formatDate(post.created_at))}</span>
               <span>👁️ ${Number(post.views) || 0} 阅读</span>
               <span>💬 <span id="comment-count">0</span> 评论</span>
             </div>

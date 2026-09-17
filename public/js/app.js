@@ -247,6 +247,13 @@ const api = {
 
 // 工具函数
 const utils = {
+  formatDateIcon(dateStr) {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `<span class="date-icon" aria-hidden="true"><span class="date-icon-month">${months[date.getMonth()]}</span><span class="date-icon-day">${date.getDate()}</span></span>`;
+  },
+
   // 格式化日期
   formatDate(dateStr) {
     const date = new Date(dateStr);
