@@ -7,7 +7,10 @@ import {
   injectHead,
   injectSiteSettings,
   injectSsrFlag,
-  getAssetHtml
+  getAssetHtml,
+  collectPostImages,
+  renderWeiboThumbs,
+  markdownToPlainText
 } from './_utils';
 
 const HTML_HEADERS = {
@@ -20,16 +23,21 @@ function postUrl(slug) {
 }
 
 function renderPostsHtml(posts) {
-  return posts.map(post => `
+  return posts.map(post => {
+    const summary = markdownToPlainText(post.summary || '');
+    const thumbs = renderWeiboThumbs(collectPostImages(post));
+    return `
           <article class="card post-card">
             <h2><a href="${postUrl(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <div class="post-meta">
               <span>📅 ${escapeHtml(formatDate(post.created_at))}</span>
               <span>👁️ ${Number(post.views) || 0} 阅读</span>
             </div>
-            <p class="post-summary">${escapeHtml(post.summary || '')}</p>
+            ${summary ? `<p class="post-summary">${escapeHtml(summary)}</p>` : ''}
+            ${thumbs}
             <a href="${postUrl(post.slug)}" class="btn btn-primary btn-sm">阅读全文 →</a>
-          </article>`).join('');
+          </article>`;
+  }).join('');
 }
 
 function renderPaginationHtml(currentPage, totalPages) {

@@ -6,7 +6,7 @@
   <title>我的博客 - 分享技术与生活</title>
   <meta name="description" content="分享技术、生活与思考的个人博客">
   <meta name="keywords" content="博客,技术,编程,生活">
-  <link rel="stylesheet" href="/css/style.css?v=20260918">
+  <link rel="stylesheet" href="/css/style.css?v=20260919">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
@@ -101,7 +101,7 @@
     </div>
   </footer>
 
-  <script src="/js/app.js?v=20260918"></script>
+  <script src="/js/app.js?v=20260919"></script>
   <script>
     // 页面初始化
     document.addEventListener('DOMContentLoaded', async () => {
@@ -115,6 +115,7 @@
       const isSsr = !!(window.__SSR_PAGE__ && window.__SSR_PAGE__.page === 'home');
 
       await loadSettings(isSsr);
+      utils.bindImageLightbox(document);
 
       // 服务端已渲染列表内容，跳过重复请求
       if (isSsr) return;
@@ -178,7 +179,8 @@
               <span>👁️ ${post.views} 阅读</span>
               ${post.status === 'draft' ? '<span style="color:var(--warning);">📝 草稿</span>' : ''}
             </div>
-            <p class="post-summary">${utils.escapeHtml(post.summary || '')}</p>
+            ${utils.markdownToPlainText(post.summary || '') ? `<p class="post-summary">${utils.escapeHtml(utils.markdownToPlainText(post.summary || ''))}</p>` : ''}
+            ${utils.renderWeiboThumbs(utils.collectPostImages(post))}
             <a href="/post/${encodeURIComponent(post.slug)}" class="btn btn-primary btn-sm">阅读全文 →</a>
           </article>
         `).join('');

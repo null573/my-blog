@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搜索 - 我的博客</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260918">
+  <link rel="stylesheet" href="/css/style.css?v=20260919">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
@@ -101,12 +101,13 @@
     </div>
   </footer>
 
-  <script src="/js/app.js?v=20260918"></script>
+  <script src="/js/app.js?v=20260919"></script>
   <script>
     let currentQuery = '';
 
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('current-year').textContent = new Date().getFullYear();
+      utils.bindImageLightbox(document);
       
       // 加载设置
       try {
@@ -193,7 +194,8 @@
                 <span>📅 ${utils.formatDate(post.created_at)}</span>
                 <span>👁️ ${post.views} 阅读</span>
               </div>
-              <p class="post-summary">${highlightedSummary}</p>
+              ${utils.markdownToPlainText(post.summary || '') ? `<p class="post-summary">${highlightText(utils.markdownToPlainText(post.summary || ''), currentQuery)}</p>` : ''}
+              ${utils.renderWeiboThumbs(utils.collectPostImages(post))}
               <a href="/post/${encodeURIComponent(post.slug)}" class="btn btn-primary btn-sm">阅读全文 →</a>
             </article>
           `;

@@ -323,6 +323,117 @@ const utils = {
     return div.innerHTML;
   },
 
+  extractImages(content = '') {
+    const urls = [];
+    const push = (url) => {
+      const value = String(url || '').trim();
+      if (value && !urls.includes(value)) urls.push(value);
+    };
+    const text = String(content);
+    let match;
+    const md = /!\[[^\]]*\]\(([^)]+)\)/g;
+    while ((match = md.exec(text))) push(match[1]);
+    const media = /(\/api\/media\/[a-z0-9]+)/gi;
+    while ((match = media.exec(text))) push(match[1]);
+    return urls;
+  },
+
+  collectPostImages(post = {}) {
+    const urls = [];
+    const push = (url) => {
+      const value = String(url || '').trim();
+      if (value && !urls.includes(value)) urls.push(value);
+    };
+    (post.images || []).forEach(push);
+    push(post.cover_image);
+    this.extractImages(post.content || '').forEach(push);
+    this.extractImages(post.summary || '').forEach(push);
+    return urls;
+  },
+
+  renderWeiboThumbs(urls = []) {
+    const list = (urls || []).filter(Boolean);
+    if (!list.length) return '';
+    const shown = list.slice(0, 9);
+    const extra = list.length > 9 ? list.length - 9 : 0;
+    const items = shown.map((url, index) => {
+      const more = extra && index === 8 ? `<span class="weibo-more">+${extra}</span>` : '';
+      return `<a href="${this.escapeHtml(url)}" class="weibo-thumb"><img src="${this.escapeHtml(url)}" alt="" loading="lazy">${more}</a>`;
+    }).join('');
+    return `<div class="weibo-thumbs count-${shown.length}">${items}</div>`;
+  },
+
+  markdownToPlainText(content = '') {
+    return String(content)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/\/api\/media\/[a-z0-9]+/gi, ' ')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/[*_>~-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  },
+
+  openLightbox(urls, startIndex = 0) {
+    const list = (urls || []).filter(Boolean);
+    if (!list.length) return;
+    let index = Math.max(0, Math.min(startIndex, list.length - 1));
+    const overlay = document.createElement('div');
+    overlay.className = 'img-lightbox';
+    overlay.innerHTML = `
+      <button type="button" class="img-lightbox-close" aria-label="关闭">×</button>
+      ${list.length > 1 ? '<button type="button" class="img-lightbox-prev" aria-label="上一张">‹</button><button type="button" class="img-lightbox-next" aria-label="下一张">›</button>' : ''}
+      <img alt="">
+      <div class="img-lightbox-count"></div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    const img = overlay.querySelector('img');
+    const count = overlay.querySelector('.img-lightbox-count');
+    const render = () => {
+      img.src = list[index];
+      count.textContent = list.length > 1 ? `${index + 1} / ${list.length}` : '';
+    };
+    const close = () => {
+      overlay.remove();
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') { index = (index - 1 + list.length) % list.length; render(); }
+      if (e.key === 'ArrowRight') { index = (index + 1) % list.length; render(); }
+    };
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay || e.target.classList.contains('img-lightbox-close')) close();
+      if (e.target.classList.contains('img-lightbox-prev')) { index = (index - 1 + list.length) % list.length; render(); }
+      if (e.target.classList.contains('img-lightbox-next')) { index = (index + 1) % list.length; render(); }
+    });
+    document.addEventListener('keydown', onKey);
+    render();
+  },
+
+  bindImageLightbox(root = document) {
+    if (root.__lightboxBound) return;
+    root.__lightboxBound = true;
+    root.addEventListener('click', (e) => {
+      const thumb = e.target.closest('.weibo-thumb, .post-content img');
+      if (!thumb) return;
+      e.preventDefault();
+      const grid = thumb.closest('.weibo-thumbs');
+      if (grid) {
+        const urls = Array.from(grid.querySelectorAll('img')).map(img => img.getAttribute('src')).filter(Boolean);
+        const current = thumb.tagName === 'IMG' ? thumb.getAttribute('src') : thumb.querySelector('img')?.getAttribute('src');
+        this.openLightbox(urls, Math.max(0, urls.indexOf(current)));
+        return;
+      }
+      const src = thumb.getAttribute('src');
+      if (src) this.openLightbox([src], 0);
+    });
+  },
+
   // 简单的Markdown解析
   parseMarkdown(text) {
     if (!text) return '';
@@ -349,12 +460,16 @@ const utils = {
     html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // 连续图片先转成微博九宫格，再处理普通链接
+    html = html.replace(/((?:!\[[^\]]*\]\([^)]+\)\s*)+)/g, (block) => {
+      const urls = this.extractImages(block);
+      if (!urls.length) return block;
+      return `\n${this.renderWeiboThumbs(urls)}\n`;
+    });
     
     // 链接
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    
-    // 图片
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
     
     // 引用
     html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
@@ -374,8 +489,8 @@ const utils = {
     // 段落
     html = html.replace(/\n\n/g, '</p><p>');
     html = '<p>' + html + '</p>';
-    html = html.replace(/<p><(h\d|ul|ol|blockquote|pre|hr)/g, '<$1');
-    html = html.replace(/<\/(h\d|ul|ol|blockquote|pre)><\/p>/g, '</$1>');
+    html = html.replace(/<p><(h\d|ul|ol|blockquote|pre|hr|div)/g, '<$1');
+    html = html.replace(/<\/(h\d|ul|ol|blockquote|pre|div)><\/p>/g, '</$1>');
     html = html.replace(/<p><\/p>/g, '');
     
     // 换行

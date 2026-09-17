@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>文章详情 - 我的博客</title>
   <meta name="description" content="博客文章详情">
-  <link rel="stylesheet" href="/css/style.css?v=20260918">
+  <link rel="stylesheet" href="/css/style.css?v=20260919">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body>
@@ -106,13 +106,14 @@
     </div>
   </footer>
 
-  <script src="/js/app.js?v=20260918"></script>
+  <script src="/js/app.js?v=20260919"></script>
   <script>
     let currentSlug = '';
     let isAdmin = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('current-year').textContent = new Date().getFullYear();
+      utils.bindImageLightbox(document);
 
       // 优先从路径 /post/:slug 解析，兼容旧的 ?slug= 形式
       const pathMatch = window.location.pathname.match(/^\/post\/(.+?)\/?$/);

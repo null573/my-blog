@@ -353,6 +353,135 @@ header {
   margin-bottom: 16px;
 }
 
+.weibo-thumbs {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  max-width: 360px;
+  width: 100%;
+}
+
+.weibo-thumbs.count-1 {
+  max-width: 280px;
+  grid-template-columns: 1fr;
+}
+
+.weibo-thumbs.count-2,
+.weibo-thumbs.count-4 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.weibo-thumbs.count-3,
+.weibo-thumbs.count-5,
+.weibo-thumbs.count-6,
+.weibo-thumbs.count-7,
+.weibo-thumbs.count-8,
+.weibo-thumbs.count-9 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.weibo-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #f1f5f9;
+  border-radius: 6px;
+  cursor: zoom-in;
+}
+
+.weibo-thumbs.count-1 .weibo-thumb {
+  aspect-ratio: auto;
+  max-height: 240px;
+}
+
+.weibo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  border-radius: 0;
+}
+
+.weibo-thumbs.count-1 .weibo-thumb img {
+  object-fit: contain;
+  height: auto;
+  max-height: 240px;
+}
+
+.weibo-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px 32px;
+}
+
+.img-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.img-lightbox-close,
+.img-lightbox-prev,
+.img-lightbox-next {
+  position: absolute;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.img-lightbox-close {
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  font-size: 28px;
+}
+
+.img-lightbox-prev,
+.img-lightbox-next {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  font-size: 32px;
+}
+
+.img-lightbox-prev { left: 8px; }
+.img-lightbox-next { right: 8px; }
+
+.img-lightbox-count {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+}
+
 .post-tags {
   display: flex;
   gap: 8px;

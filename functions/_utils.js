@@ -53,9 +53,50 @@ export function getClientIP(request) {
          '127.0.0.1';
 }
 
+// 从 Markdown 正文提取图片地址
+export function extractImages(content = '') {
+  const urls = [];
+  const push = (url) => {
+    const value = String(url || '').trim();
+    if (value && !urls.includes(value)) urls.push(value);
+  };
+  const text = String(content);
+  let match;
+  const md = /!\[[^\]]*\]\(([^)]+)\)/g;
+  while ((match = md.exec(text))) push(match[1]);
+  const media = /(\/api\/media\/[a-z0-9]+)/gi;
+  while ((match = media.exec(text))) push(match[1]);
+  return urls;
+}
+
+export function collectPostImages(post = {}) {
+  const urls = [];
+  const push = (url) => {
+    const value = String(url || '').trim();
+    if (value && !urls.includes(value)) urls.push(value);
+  };
+  (post.images || []).forEach(push);
+  push(post.cover_image);
+  extractImages(post.content || '').forEach(push);
+  extractImages(post.summary || '').forEach(push);
+  return urls;
+}
+
+export function renderWeiboThumbs(urls = []) {
+  const list = (urls || []).filter(Boolean);
+  if (!list.length) return '';
+  const shown = list.slice(0, 9);
+  const extra = list.length > 9 ? list.length - 9 : 0;
+  const items = shown.map((url, index) => {
+    const more = extra && index === 8 ? `<span class="weibo-more">+${extra}</span>` : '';
+    return `<a href="${escapeHtml(url)}" class="weibo-thumb"><img src="${escapeHtml(url)}" alt="" loading="lazy">${more}</a>`;
+  }).join('');
+  return `<div class="weibo-thumbs count-${shown.length}">${items}</div>`;
+}
+
 // 生成摘要
 export function generateSummary(content, length = 200) {
-  const text = content.replace(/<[^>]*>/g, '').replace(/[#*`\[\]]/g, '').trim();
+  const text = markdownToPlainText(content);
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
 
@@ -135,6 +176,7 @@ export async function savePost(env, post) {
     slug: post.slug,
     summary: post.summary,
     cover_image: post.cover_image,
+    images: collectPostImages(post),
     status: post.status,
     allow_comments: post.allow_comments,
     views: post.views,
@@ -357,11 +399,15 @@ export function parseMarkdown(text) {
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
+  // 连续图片先转成微博九宫格，再处理普通链接
+  html = html.replace(/((?:!\[[^\]]*\]\([^)]+\)\s*)+)/g, (block) => {
+    const urls = extractImages(block);
+    if (!urls.length) return block;
+    return `\n${renderWeiboThumbs(urls)}\n`;
+  });
+
   // 链接
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-  // 图片
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
 
   // 引用
   html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
@@ -381,8 +427,8 @@ export function parseMarkdown(text) {
   // 段落
   html = html.replace(/\n\n/g, '</p><p>');
   html = '<p>' + html + '</p>';
-  html = html.replace(/<p><(h\d|ul|ol|blockquote|pre|hr)/g, '<$1');
-  html = html.replace(/<\/(h\d|ul|ol|blockquote|pre)><\/p>/g, '</$1>');
+  html = html.replace(/<p><(h\d|ul|ol|blockquote|pre|hr|div)/g, '<$1');
+  html = html.replace(/<\/(h\d|ul|ol|blockquote|pre|div)><\/p>/g, '</$1>');
   html = html.replace(/<p><\/p>/g, '');
 
   // 换行
@@ -398,6 +444,7 @@ export function markdownToPlainText(content = '') {
     .replace(/`([^`]+)`/g, '$1')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\/api\/media\/[a-z0-9]+/gi, ' ')
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/[*_>~-]/g, '')
     .replace(/\s+/g, ' ')
