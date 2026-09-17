@@ -443,6 +443,8 @@ export function markdownToPlainText(content = '') {
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/!?\s*图片\s*\([^)]*\)/g, ' ')
+    .replace(/!\[[^\]]*\]/g, ' ')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\/api\/media\/[a-z0-9]+/gi, ' ')
     .replace(/^#{1,6}\s+/gm, '')
