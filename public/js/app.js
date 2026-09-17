@@ -74,15 +74,78 @@ const api = {
     return this.request(endpoint, { method: 'DELETE' });
   },
 
+  // 超过限制时压缩图片（缩小边长并转 JPEG），GIF 动画保持原样
+  async compressImage(file, maxBytes = 1800 * 1024, maxEdge = 1920) {
+    if (!file || !file.type || !file.type.startsWith('image/')) return file;
+    if (file.type === 'image/gif') return file;
+    if (file.size <= maxBytes) return file;
+    if (typeof createImageBitmap !== 'function') return file;
+
+    let bitmap = await createImageBitmap(file);
+    let width = bitmap.width;
+    let height = bitmap.height;
+    if (width > maxEdge || height > maxEdge) {
+      const scale = maxEdge / Math.max(width, height);
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+    }
+
+    const blobToFile = (blob) => {
+      const name = (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg';
+      return new File([blob], name, { type: 'image/jpeg' });
+    };
+
+    const drawAndEncode = async (w, h, quality) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    };
+
+    try {
+      for (const quality of [0.82, 0.7, 0.55, 0.4]) {
+        const blob = await drawAndEncode(width, height, quality);
+        if (blob && blob.size <= maxBytes) {
+          bitmap.close();
+          return blobToFile(blob);
+        }
+      }
+
+      // 质量降到最低仍过大时，继续缩小边长
+      for (let i = 0; i < 3; i++) {
+        width = Math.max(1, Math.round(width * 0.75));
+        height = Math.max(1, Math.round(height * 0.75));
+        const blob = await drawAndEncode(width, height, 0.4);
+        if (blob && blob.size <= maxBytes) {
+          bitmap.close();
+          return blobToFile(blob);
+        }
+        if (i === 2 && blob) {
+          bitmap.close();
+          return blobToFile(blob);
+        }
+      }
+    } catch (e) {
+      try { bitmap.close(); } catch (_) {}
+      return file;
+    }
+
+    try { bitmap.close(); } catch (_) {}
+    return file;
+  },
+
   // 上传图片（multipart，不强制 JSON Content-Type）
   async upload(file) {
+    const compressed = await this.compressImage(file);
     const headers = {};
     const token = this.getToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', compressed);
     const response = await fetch(`${API_BASE}/upload`, {
       method: 'POST',
       headers,
