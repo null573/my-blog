@@ -1611,6 +1611,23 @@ html {
   font-weight: normal;
 }
 
+.post-edit-content-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.post-edit-content-label label {
+  margin-bottom: 0;
+}
+
+.post-edit-upload-btn {
+  flex-shrink: 0;
+}
+
 .post-content-textarea {
   width: 100%;
   min-height: 300px;

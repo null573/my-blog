@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>编辑文章 - 博客管理</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260916">
+  <link rel="stylesheet" href="/css/style.css?v=20260917">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 </head>
 <body class="post-edit-page">
   <div id="app"></div>
 
-  <script src="/js/app.js?v=20260916"></script>
-  <script src="/js/admin.js?v=20260916"></script>
+  <script src="/js/app.js?v=20260917"></script>
+  <script src="/js/admin.js?v=20260917"></script>
   <script>
     let editSlug = null;
     let isEditMode = false;
@@ -78,7 +78,11 @@
               </div>
 
               <div class="form-group post-edit-editor-group">
-                <label>文章内容 * <span class="post-edit-hint">支持 Markdown，可直接粘贴图片</span></label>
+                <div class="post-edit-content-label">
+                  <label>文章内容 * <span class="post-edit-hint">支持 Markdown，可粘贴或选择图片上传</span></label>
+                  <button type="button" class="btn btn-secondary btn-sm post-edit-upload-btn" onclick="pickImage()">📷 上传图片</button>
+                  <input type="file" id="post-image-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                </div>
                 <div id="editor-container" class="editor-container" style="display:none;">
                   <textarea id="post-content" class="post-content-textarea" placeholder="开始写作..."></textarea>
                   <div id="preview-panel" class="editor-preview">
@@ -109,11 +113,27 @@
     function bindEditorEvents() {
       const simple = document.getElementById('post-content-simple');
       const preview = document.getElementById('post-content');
+      const fileInput = document.getElementById('post-image-input');
       simple.addEventListener('input', updatePreview);
       simple.addEventListener('paste', handlePasteImage);
       if (preview) {
         preview.addEventListener('paste', handlePasteImage);
       }
+      if (fileInput) {
+        fileInput.addEventListener('change', handleSelectImage);
+      }
+    }
+
+    function pickImage() {
+      const fileInput = document.getElementById('post-image-input');
+      if (fileInput) fileInput.click();
+    }
+
+    async function handleSelectImage(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      await insertUploadedImage(file);
     }
 
     function insertAtCursor(textarea, text) {
@@ -137,6 +157,14 @@
       event.preventDefault();
       const file = imageItem.getAsFile();
       if (!file) return;
+      await insertUploadedImage(file);
+    }
+
+    async function insertUploadedImage(file) {
+      if (!file.type || !file.type.startsWith('image/')) {
+        utils.showMessage('请选择图片文件', 'error');
+        return;
+      }
 
       const textarea = document.getElementById('post-content-simple');
       const previewTa = document.getElementById('post-content');
