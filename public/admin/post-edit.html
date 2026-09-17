@@ -10,8 +10,8 @@
 <body class="post-edit-page">
   <div id="app"></div>
 
-  <script src="/js/app.js"></script>
-  <script src="/js/admin.js"></script>
+  <script src="/js/app.js?v=20260916"></script>
+  <script src="/js/admin.js?v=20260916"></script>
   <script>
     let editSlug = null;
     let isEditMode = false;
@@ -78,7 +78,7 @@
               </div>
 
               <div class="form-group post-edit-editor-group">
-                <label>文章内容 * <span class="post-edit-hint">支持 Markdown</span></label>
+                <label>文章内容 * <span class="post-edit-hint">支持 Markdown，可直接粘贴图片</span></label>
                 <div id="editor-container" class="editor-container" style="display:none;">
                   <textarea id="post-content" class="post-content-textarea" placeholder="开始写作..."></textarea>
                   <div id="preview-panel" class="editor-preview">
@@ -103,7 +103,62 @@
         </div>
       `;
 
-      document.getElementById('post-content-simple').addEventListener('input', updatePreview);
+      bindEditorEvents();
+    }
+
+    function bindEditorEvents() {
+      const simple = document.getElementById('post-content-simple');
+      const preview = document.getElementById('post-content');
+      simple.addEventListener('input', updatePreview);
+      simple.addEventListener('paste', handlePasteImage);
+      if (preview) {
+        preview.addEventListener('paste', handlePasteImage);
+      }
+    }
+
+    function insertAtCursor(textarea, text) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      textarea.value = value.slice(0, start) + text + value.slice(end);
+      const cursor = start + text.length;
+      textarea.selectionStart = cursor;
+      textarea.selectionEnd = cursor;
+      textarea.focus();
+    }
+
+    async function handlePasteImage(event) {
+      const items = event.clipboardData && event.clipboardData.items;
+      if (!items) return;
+
+      const imageItem = Array.from(items).find(item => item.type && item.type.startsWith('image/'));
+      if (!imageItem) return;
+
+      event.preventDefault();
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      const textarea = document.getElementById('post-content-simple');
+      const previewTa = document.getElementById('post-content');
+      insertAtCursor(textarea, '![上传中...]()');
+      if (previewTa && previewTa.offsetParent !== null) {
+        previewTa.value = textarea.value;
+      }
+      updatePreview();
+
+      try {
+        const result = await api.upload(file);
+        const markdown = `![图片](${result.url})`;
+        textarea.value = textarea.value.replace('![上传中...]()', markdown);
+        if (previewTa) previewTa.value = textarea.value;
+        updatePreview();
+        utils.showMessage('图片已插入', 'success');
+      } catch (e) {
+        textarea.value = textarea.value.replace('![上传中...]()', '');
+        if (previewTa) previewTa.value = textarea.value;
+        updatePreview();
+        utils.showMessage(e.message || '图片上传失败', 'error');
+      }
     }
 
     async function loadPost() {

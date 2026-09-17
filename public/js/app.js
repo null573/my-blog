@@ -74,6 +74,27 @@ const api = {
     return this.request(endpoint, { method: 'DELETE' });
   },
 
+  // 上传图片（multipart，不强制 JSON Content-Type）
+  async upload(file) {
+    const headers = {};
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const form = new FormData();
+    form.append('file', file);
+    const response = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers,
+      body: form
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || '上传失败');
+    }
+    return data;
+  },
+
   // 文章相关
   posts: {
     list(page = 1, limit = 10, status = 'published') {
